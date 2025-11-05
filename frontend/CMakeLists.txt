@@ -24,6 +24,10 @@ target_compile_definitions(vcrypto PRIVATE
   LOG_USE_COLOR
 )
 
+target_precompile_headers(vcrypto PRIVATE
+  <klib/khash.h>
+  <log.h>
+)
 set_target_properties(vcrypto PROPERTIES
   VERSION 1.0
   SOVERSION 1
