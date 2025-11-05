@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 project(vcrypto_engine_frontend LANGUAGES C)
 
 add_library(vcrypto SHARED

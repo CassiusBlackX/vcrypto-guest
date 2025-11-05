@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 project(vcrypto_engine_backend LANGUAGES C)
 
 add_executable(${PROJECT_NAME}
@@ -22,4 +22,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   LOG_USE_COLOR
+)
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE
+  <klib/khash.h>
+  <log.h>
 )
