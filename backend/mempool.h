@@ -13,6 +13,8 @@
 #define MAX_TLS_MAC_LENGTH 64
 #define MAX_TLS_PAD_LENGTH 256
 
+#define NUM_OBJ_MP 2
+
 void vcrypto_be_mempool_prepare();
 void vcrypto_be_mempool_cleanup();
 void buf_len_to_obj_arr_idx(uint32_t buf_len);
