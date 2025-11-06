@@ -23,7 +23,7 @@ enum vcrypto_be_socket_status vcrypto_socket_set_non_blocking(int fd) {
   return VCRYPTO_SOCKET_OK;
 }
 
-enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, char* recv_data_buf, int recv_len, int *recv_fd, int num_fd) {
+enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, void* recv_data_buf, int recv_len, int *recv_fd, int num_fd) {
   if (num_fd != 1 && num_fd != 0) {
     log_error("vcrypto_recvmsg error, invali arg num_fd");
     exit(1);
@@ -88,7 +88,7 @@ enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, char* recv_data_buf, i
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, char* send_data_buf, int send_len, int send_fd, int num_fd) {
+enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, void* send_data_buf, int send_len, int send_fd, int num_fd) {
   if (num_fd != 1 && num_fd != 0) {
     log_error("vcrypto_sendmsg error, invalid arg num_fd");
     exit(1);
@@ -154,7 +154,7 @@ enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, char* send_data_buf, i
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_recv(int connfd, char* recv_data_buf, int recv_len) {
+enum vcrypto_be_socket_status vcrypto_recv(int connfd, void* recv_data_buf, int recv_len) {
   int recv_len_partial = 0;
   while (recv_len > 0) {
     recv_len_partial = read(connfd, recv_data_buf, recv_len);
@@ -181,7 +181,7 @@ enum vcrypto_be_socket_status vcrypto_recv(int connfd, char* recv_data_buf, int 
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_send(int connfd, char* send_data_buf, int send_len) {
+enum vcrypto_be_socket_status vcrypto_send(int connfd, void* send_data_buf, int send_len) {
   int send_len_partial = 0;
   while (send_len > 0) {
     send_len_partial = write(connfd, send_data_buf, send_len);

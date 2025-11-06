@@ -7,10 +7,10 @@ enum vcrypto_be_socket_status {
 };
 
 enum vcrypto_be_socket_status vcrypto_socket_set_non_blocking(int fd);
-enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, char* recv_data_buf, int recv_len, int *recv_fd, int num_fd);
-enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, char* send_data_buf, int send_len, int send_fd, int num_fd);
-enum vcrypto_be_socket_status vcrypto_recv(int connfd, char* recv_data_buf, int recv_len);
-enum vcrypto_be_socket_status vcrypto_send(int connfd, char* send_data_buf, int send_len);
+enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, void* recv_data_buf, int recv_len, int *recv_fd, int num_fd);
+enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, void* send_data_buf, int send_len, int send_fd, int num_fd);
+enum vcrypto_be_socket_status vcrypto_recv(int connfd, void* recv_data_buf, int recv_len);
+enum vcrypto_be_socket_status vcrypto_send(int connfd, void* send_data_buf, int send_len);
 
 
 #endif // VCRYPTO_GUEST_SOCKET
