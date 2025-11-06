@@ -24,7 +24,3 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   LOG_USE_COLOR
 )
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE
-  <klib/khash.h>
-  <log.h>
-)
