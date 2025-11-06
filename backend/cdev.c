@@ -51,7 +51,7 @@ void vcrypto_be_cdev_resource_prepare() {
   }
 
   char ring_name[16];
-  sprintf(ring_name, "shared_ring_%d", cdev_ids[0]);
+  snprintf(ring_name, sizeof(ring_name), "shared_ring_%d", cdev_ids[0]);
 
   cr->shared_ring = rte_ring_create(ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
   if (cr->shared_ring == 0) {

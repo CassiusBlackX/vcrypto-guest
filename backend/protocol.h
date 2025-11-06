@@ -2,7 +2,6 @@
 #define VCRYPTO_GUEST_BE_PROTOCOL_H
 
 #include <stdint.h>
-#include <stdlib.h>
 
 enum msg_type_cmd {
   MSG_TYPE_CREATE_SESS,
@@ -12,7 +11,7 @@ enum msg_type_cmd {
 };
 
 typedef struct {
-  char* obj_mp_namep[16];
+  char obj_mp_name[16];
   uint32_t obj_mp_buf_size;
   uint16_t obj_mp_buf_offset;  
 } obj_mp_meta;
