@@ -3,7 +3,7 @@ project(vcrypto_engine_frontend LANGUAGES C)
 
 add_library(vcrypto SHARED
   ciphers.c
-  engine.c
+  provider.c
   events.c
   md5.c
   protocol.c
