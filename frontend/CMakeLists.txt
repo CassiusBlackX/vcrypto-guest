@@ -7,21 +7,29 @@ add_library(vcrypto SHARED
   events.c
   md5.c
   protocol.c
-  socket.c
-  util.c
 )
 
 target_link_libraries(vcrypto PRIVATE
   crypto
   pthread
   ${DPDK_LIBRARIES}
-  log_c
   klib
 )
 
+if(NOT RELEASE_NODE)
+  target_link_libraries(vcrypto PRIVATE
+    log_c_shared
+    vcrypto_engine_socket_shared
+  )
+else()
+  target_link_libraries(vcrypto PRIVATE
+    log_c
+    vcrypto_engine_socket
+  )
+endif()
+
 target_compile_definitions(vcrypto PRIVATE
   OPENSSL_ENABLE_VCRYPTO_SMALL_PACKET_CIPHER_OFFLOADS
-  LOG_USE_COLOR
 )
 
 set_target_properties(vcrypto PROPERTIES

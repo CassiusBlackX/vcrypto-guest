@@ -5,7 +5,6 @@
 #include <log.h>
 
 #include "cdev.h"
-#include "util.h"
 
 extern struct rte_mempool *sess_mp;
 

@@ -3,24 +3,29 @@ project(vcrypto_engine_backend LANGUAGES C)
 
 add_executable(${PROJECT_NAME}
   main.c
-  util.c
   loop.c
   protocol.c
   mempool.c
   cdev.c
   sess.c
-  socket.c
+  hashmap.c
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   crypto
   pthread
   ${DPDK_LIBRARIES}
-  log_c
   klib
 )
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  LOG_USE_COLOR
-)
-
+if(NOT RELEASE_NODE)
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    log_c_shared
+    vcrypto_engine_socket_shared
+  )
+else()
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    log_c
+    vcrypto_engine_socket
+  )
+endif()

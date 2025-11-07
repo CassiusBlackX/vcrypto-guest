@@ -6,7 +6,7 @@
 #include "cdev.h"
 #include "khash.h"
 #include "sess.h"
-#include "util.h"
+#include "hashmap.h"
 
 extern cdev_resource* cr;
 

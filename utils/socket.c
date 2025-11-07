@@ -1,32 +1,61 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/types.h>
+
 #include <log.h>
 
 #include "socket.h"
 
-enum vcrypto_be_socket_status vcrypto_socket_set_non_blocking(int fd) {
+bool vcrypto_socket_set_non_blocking(int fd) {
   int flags = fcntl(fd, F_GETFL, NULL);
   if (flags < 0) {
     log_error("fcntl F_GETFL failed, %s", strerror(errno));
-    exit(1);
+    return false;
   }
   flags |= O_NONBLOCK;
   if (fcntl(fd, F_SETFL, flags) < 0) {
     log_error("fcntl F_SETFL failed, %s", strerror(errno));
-    exit(1);
+    return false;
   }
-  return VCRYPTO_SOCKET_OK;
+  return true;
 }
 
-enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, void* recv_data_buf, int recv_len, int *recv_fd, int num_fd) {
+int vcrypto_connect(char* socket_file_path) {
+  int conn_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  if (conn_fd < 0) {
+    log_error("failed to create socket with errno: %s", strerror(errno));
+    return -1;
+  }
+  struct sockaddr_un be = {
+    .sun_family = AF_UNIX,
+  };
+  // NOTE: the strlen of `socket_file_path` can be no more than 106!
+  if (strlen(socket_file_path) >= sizeof(be.sun_path)) {
+    log_error("the strlen of 'socket_file_path' is longer than 'sun_path' can take");
+    return -1;
+  }
+  strncpy(be.sun_path, socket_file_path, sizeof(be.sun_path)-1);
+  int len = strlen(be.sun_path) + sizeof(be.sun_family);
+  if (connect(conn_fd, (struct sockaddr*)&be, len) == -1) {
+    log_error("failed to connect to connfd with current 'socket_file_path'");
+    return -1;
+  }
+  log_trace("connection established");
+  return conn_fd;
+}
+
+bool vcrypto_recvmsg(int connfd, void* recv_data_buf, int recv_len, int *recv_fd, int num_fd) {
   if (num_fd != 1 && num_fd != 0) {
     log_error("vcrypto_recvmsg error, invali arg num_fd");
-    exit(1);
+    return false;
   }
 
   struct cmsghdr *cmsghdr = 0;
@@ -65,7 +94,7 @@ enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, void* recv_data_buf, i
         continue;
       } else {
         log_error("error in vcrypto_recvmsg, with errno: %s", strerror(errno));
-        exit(1);
+        return false;
       }
     }
     log_trace("recv %d bytes", recv_len_partial);
@@ -81,17 +110,17 @@ enum vcrypto_be_socket_status vcrypto_recvmsg(int connfd, void* recv_data_buf, i
   }
   if (recv_len == 0) {
     log_trace("all msg received in vcrypto_recvmsg!");
-    return VCRYPTO_SOCKET_OK;
+    return true;
   } else {
     log_error("not all msg received in vcrypto_recvmsg!");
-    return VCRYPTO_SOCKET_ERR;
+    return false;
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, void* send_data_buf, int send_len, int send_fd, int num_fd) {
+bool vcrypto_sendmsg(int connfd, void* send_data_buf, int send_len, int send_fd, int num_fd) {
   if (num_fd != 1 && num_fd != 0) {
     log_error("vcrypto_sendmsg error, invalid arg num_fd");
-    exit(1);
+    return false;
   }
 
   struct cmsghdr* cmsghdr = 0;
@@ -131,7 +160,7 @@ enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, void* send_data_buf, i
         continue;
       } else {
         log_error("error in vcrypto_sendmsg, with errno: %s", strerror(errno));
-        exit(1);
+        return false;
       }
     }
     log_trace("send %d bytes", send_len_partial);
@@ -147,14 +176,14 @@ enum vcrypto_be_socket_status vcrypto_sendmsg(int connfd, void* send_data_buf, i
 
   if (send_len == 0) {
     log_trace("all msg send in vcrypto_sendmsg!");
-    return VCRYPTO_SOCKET_OK;
+    return true;
   } else {
     log_error("not all msg sent in vcrypto_sendmsg!");
-    return VCRYPTO_SOCKET_ERR;
+    return false;
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_recv(int connfd, void* recv_data_buf, int recv_len) {
+bool vcrypto_recv(int connfd, void* recv_data_buf, int recv_len) {
   int recv_len_partial = 0;
   while (recv_len > 0) {
     recv_len_partial = read(connfd, recv_data_buf, recv_len);
@@ -164,7 +193,7 @@ enum vcrypto_be_socket_status vcrypto_recv(int connfd, void* recv_data_buf, int 
         continue;
       } else {
         log_error("error in vcrypto_recv, with errno: %s", strerror(errno));
-        exit(1);
+        return false;
       }
     }
     log_trace("recv %d bytes", recv_len_partial);
@@ -174,14 +203,14 @@ enum vcrypto_be_socket_status vcrypto_recv(int connfd, void* recv_data_buf, int 
 
   if (recv_len == 0) {
     log_trace("all received in vcrypto_recv");
-    return VCRYPTO_SOCKET_OK;
+    return true;
   } else {
     log_error("not all received in vcrypto_recv");
-    return VCRYPTO_SOCKET_ERR;
+    return false;
   }
 }
 
-enum vcrypto_be_socket_status vcrypto_send(int connfd, void* send_data_buf, int send_len) {
+bool vcrypto_send(int connfd, void* send_data_buf, int send_len) {
   int send_len_partial = 0;
   while (send_len > 0) {
     send_len_partial = write(connfd, send_data_buf, send_len);
@@ -191,7 +220,7 @@ enum vcrypto_be_socket_status vcrypto_send(int connfd, void* send_data_buf, int 
         continue;
       } else {
         log_error("error in vcrypto_send, with errno: %s", strerror(errno));
-        exit(1);
+        return false;
       }
     }
     log_trace("send %d bytes", send_len_partial);
@@ -201,9 +230,9 @@ enum vcrypto_be_socket_status vcrypto_send(int connfd, void* send_data_buf, int 
 
   if (send_len == 0) {
     log_trace("all received in vcrypto_send");
-    return VCRYPTO_SOCKET_OK;
+    return true;
   } else {
     log_error("not all received in vcrypto_send");
-    return VCRYPTO_SOCKET_ERR;
+    return false;
   }
 }

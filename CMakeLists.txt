@@ -48,6 +48,7 @@ if(PKG_CONFIG_FOUND)
   endif()
 endif()
 
+add_subdirectory(utils)
 add_subdirectory(frontend)
 add_subdirectory(backend)
 
