@@ -4,14 +4,10 @@ project(vcrypto_engine_frontend LANGUAGES C)
 add_library(vcrypto SHARED
   provider.c
   events.c
-  md5.c
   protocol.c
 )
 target_sources(vcrypto PRIVATE
-  ciphers/aes_cbc.c
-  ciphers/aes_ctr.c
-  ciphers/aes_ecb.c
-  ciphers/aes_xts.c
+  aes_cbc.c
 )
 
 target_link_libraries(vcrypto PRIVATE

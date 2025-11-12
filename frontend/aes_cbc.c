@@ -6,7 +6,7 @@
 #include <log.h>
 
 #include "aes_cbc.h"
-#include "cipher_auth_ctrl.h"
+#include "protocol.h"
 
 void *vcrypto_aes_cbc_newctx(void *provctx) {
   return OPENSSL_zalloc(sizeof(vcrypto_aes_cbc_ctx));  
@@ -27,8 +27,7 @@ int vcrypto_aes_cbc_einit(void *cctx, const unsigned char* key, size_t keylen,
 
   ctx->cipher_auth.direction = CIPHER_DIRECTION_ENCRYPT;
 
-  // BUG: aes-256-cbc as default, should support other size as well
-  ctx->cipher_auth.alg_nid = NID_aes_256_cbc; 
+  ctx->cipher_auth.alg_nid = (keylen == 16) ? NID_aes_128_cbc : NID_aes_256_cbc; 
   
   memcpy(ctx->cipher_auth.cipher_key_data, key, keylen);
   ctx->cipher_auth.cipher_key_len = keylen;
@@ -39,6 +38,9 @@ int vcrypto_aes_cbc_einit(void *cctx, const unsigned char* key, size_t keylen,
     log_trace("no passed in iv");
     ctx->cipher_auth.cipher_iv_len = 0;
   }
+
+  
+  
   return 1;
 }
 
@@ -69,8 +71,12 @@ int vcrypto_aes_cbc_dinit(void *cctx, const unsigned char* key, size_t keylen,
 }
 
 int vcrypto_aes_cbc_update(void* cctx, unsigned char* out, size_t *outl, size_t outsize, 
-                           const unsigned char* in, size_t intl) {
-
+                           const unsigned char* in, size_t inl) {
+  vcrypto_aes_cbc_ctx* ctx = (vcrypto_aes_cbc_ctx*)cctx;
+  if (ctx == NULL) {
+    log_error("vcrypto_ctx null");
+    return 0;
+  }
 }
 
 int vcrypto_aes_cbc_final(void* cctx, unsigned char* out, size_t *outl, size_t outsize) {
