@@ -3,7 +3,6 @@ project(vcrypto_engine_socket)
 
 add_library(${PROJECT_NAME} STATIC
   socket.c
-  md5.c
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC
   log_c

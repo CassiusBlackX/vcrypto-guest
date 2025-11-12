@@ -48,6 +48,24 @@ if(PKG_CONFIG_FOUND)
   endif()
 endif()
 
+# xxHash library for hash
+add_library(xxHash STATIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/xxHash/xxhash.c
+)
+target_include_directories(xxHash PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/xxHash
+)
+
+if(NOT RELEASE_MODE)
+  add_library(xxHash_shared SHARED 
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/xxHash/xxhash.c
+  )
+  target_include_directories(log_c_shared PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/xxHash
+  )
+endif()
+
+
 add_subdirectory(utils)
 add_subdirectory(frontend)
 add_subdirectory(backend)
