@@ -21,11 +21,13 @@ if(NOT RELEASE_NODE)
   target_link_libraries(vcrypto PRIVATE
     log_c_shared
     vcrypto_engine_socket_shared
+    xxHash_shared
   )
 else()
   target_link_libraries(vcrypto PRIVATE
     log_c
     vcrypto_engine_socket
+    xxhash
   )
 endif()
 

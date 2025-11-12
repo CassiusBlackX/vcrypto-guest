@@ -18,10 +18,16 @@ typedef struct cipher_auth_t {
   uint64_t alg_elems_md5;
 } cipher_auth_ctrl;
 
+#define CTX_STATUS_INITED 0x1
+#define CTX_STATUS_SESSION_CREATED 0x2
+#define CTX_SET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags |= (flag))
+#define CTX_UNSET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags &= ~(flag))
+#define CTX_GET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags & (flag))
+
 typedef struct vcrypto_aes_cbc_ctx_t {
   cipher_auth_ctrl cipher_auth;
   struct rte_cryptodev_sym_session* sess;
-  uint32_t init_flags;
+  uint32_t status_flags;
 } vcrypto_aes_cbc_ctx;
 
 OSSL_FUNC_cipher_newctx_fn vcrypto_aes_cbc_newctx;

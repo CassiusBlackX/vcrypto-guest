@@ -1,9 +1,11 @@
 #include <openssl/crypto.h>
 #include <openssl/obj_mac.h>
+#include <stdint.h>
 #include <string.h>
 #include <stddef.h>
 
 #include <log.h>
+#include <xxhash.h>
 
 #include "aes_cbc.h"
 #include "protocol.h"
@@ -39,8 +41,7 @@ int vcrypto_aes_cbc_einit(void *cctx, const unsigned char* key, size_t keylen,
     ctx->cipher_auth.cipher_iv_len = 0;
   }
 
-  
-  
+  CTX_SET_STATUS_FLAG(ctx, CTX_STATUS_INITED);
   return 1;
 }
 
@@ -61,12 +62,14 @@ int vcrypto_aes_cbc_dinit(void *cctx, const unsigned char* key, size_t keylen,
   memcpy(ctx->cipher_auth.cipher_key_data, key, keylen);
   ctx->cipher_auth.cipher_key_len = keylen;
   if (iv) {
-    log_trace("using passed in iv!");
+    log_trace("using passed in iv");
     ctx->cipher_auth.cipher_iv_len = ivlen;
   } else {
     log_trace("no passed in iv");
     ctx->cipher_auth.cipher_iv_len = 0;
   }
+
+  CTX_SET_STATUS_FLAG(ctx, CTX_STATUS_INITED);
   return 1;
 }
 
@@ -77,6 +80,21 @@ int vcrypto_aes_cbc_update(void* cctx, unsigned char* out, size_t *outl, size_t 
     log_error("vcrypto_ctx null");
     return 0;
   }
+
+  if (!CTX_GET_STATUS_FLAG(ctx, CTX_STATUS_INITED)) {
+    log_error("vcrypto_ctx is not initialzed");
+    return 0;
+  }
+
+  if (!CTX_GET_STATUS_FLAG(ctx, CTX_STATUS_SESSION_CREATED)) {
+    // session not created, cal md5 of the session and create one
+    XXH64_hash_t hash = XXH64(&(ctx->cipher_auth), sizeof(ctx->cipher_auth), 0);  // BUG: seed is set 0
+    ctx->cipher_auth.alg_elems_md5 = hash;
+    vcrypto_fe_protocol_create_sess(ctx);
+    CTX_SET_STATUS_FLAG(ctx, CTX_STATUS_SESSION_CREATED);
+  }
+
+  
 }
 
 int vcrypto_aes_cbc_final(void* cctx, unsigned char* out, size_t *outl, size_t outsize) {
