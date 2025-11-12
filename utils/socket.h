@@ -2,6 +2,7 @@
 #define VCRYPTO_GUEST_SOCKET
 
 #include <stdbool.h>
+#include <stdint.h>
 
 // return true on success, else false
 bool vcrypto_socket_set_non_blocking(int fd);

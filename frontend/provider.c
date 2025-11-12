@@ -1,8 +1,12 @@
-#include <string.h>
-
 #include <openssl/core_dispatch.h>
+#include <openssl/crypto.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+
+#include <log.h>
+
+#include "provider.h"
+#include "ciphers.h"
 
 // for OpenSSL to get information about the provider
 // e.g. version & name
@@ -17,4 +21,4 @@ static OSSL_FUNC_provider_get_capabilities_fn vcrypto_get_capabilities;
 // perform known answer tests on itseld
 static OSSL_FUNC_provider_self_test_fn vcrypto_self_test;
 
-
+ 

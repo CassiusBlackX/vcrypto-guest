@@ -3,6 +3,7 @@
 
 #include <openssl/provider.h>
 #include <openssl/async.h>
+#include <stdbool.h>
 
 #define OFFSET_ALG_NID 0
 #define OFFSET_VERIFY_DIGEST 4
@@ -28,20 +29,20 @@
 #define ALG_ELEMS_GET_CIPHER_IV_SIZE(p) ( *((int *)((unsigned char *)p + OFFSET_CIPHER_IV_SIZE)) )
 #define ALG_ELEMS_GET_AUTH_KEY_SIZE(p) ( *((int *)((unsigned char *)p + OFFSET_AUTH_KEY_SIZE)) )
 
-typedef struct {
+typedef struct op_done_t {
     volatile int flag; // set by be to show that all the pipeline ops of a do_cipher have been handled
-    volatile int verifyResult;
+    volatile bool verify_result;
     volatile ASYNC_JOB *job;
-} op_done_t;
+} op_done;
 
-typedef struct {
-	op_done_t opDone;
+typedef struct op_done_pipe_type {
+	op_done opDone;
 	volatile int num_pipes;
 	volatile int num_submitted;
 	volatile int num_processed;
 	volatile int be_async_fd;
 	volatile int be_conn_fd;
-} op_done_pipe_t;
+} op_done_pipe;
 
 void vcrypto_create_ciphers(void);
 void vcrypto_free_ciphers(void);

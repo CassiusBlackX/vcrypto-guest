@@ -2,11 +2,16 @@ cmake_minimum_required(VERSION 3.20)
 project(vcrypto_engine_frontend LANGUAGES C)
 
 add_library(vcrypto SHARED
-  ciphers.c
   provider.c
   events.c
   md5.c
   protocol.c
+)
+target_sources(vcrypto PRIVATE
+  ciphers/aes_cbc.c
+  ciphers/aes_ctr.c
+  ciphers/aes_ecb.c
+  ciphers/aes_xts.c
 )
 
 target_link_libraries(vcrypto PRIVATE

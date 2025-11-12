@@ -103,7 +103,7 @@ void vcrypto_be_mempool_prepare() {
   }
 
   // prepare opdone mp
-  opdpipe_mp = rte_mempool_create_empty("opdpipe_mp", OPDPIPE_POOL_INITIAL_SIZE, sizeof(op_done_pipe_t), 512, 0, socket_id, 0);
+  opdpipe_mp = rte_mempool_create_empty("opdpipe_mp", OPDPIPE_POOL_INITIAL_SIZE, sizeof(op_done_pipe), 512, 0, socket_id, 0);
   if (opdpipe_mp == NULL) {
     log_error("cannot allocate opdpipe_mp");
     exit(1);
