@@ -94,7 +94,6 @@ int vcrypto_aes_cbc_update(void* cctx, unsigned char* out, size_t *outl, size_t 
     CTX_SET_STATUS_FLAG(ctx, CTX_STATUS_SESSION_CREATED);
   }
 
-  
 }
 
 int vcrypto_aes_cbc_final(void* cctx, unsigned char* out, size_t *outl, size_t outsize) {
