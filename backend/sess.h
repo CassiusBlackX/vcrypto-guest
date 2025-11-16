@@ -5,6 +5,8 @@
 #include <rte_cryptodev.h>
 #include <rte_ring.h>
 
+// TODO: the struct is not needed!
+// we can use rte_cryptodev_session_priate_data, filling the refcout inside
 typedef struct {
   struct rte_crypto_sym_session *sess;
   size_t ret_count;

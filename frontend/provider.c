@@ -4,9 +4,15 @@
 #include <openssl/params.h>
 
 #include <log.h>
+#include <rte_mempool.h>
 
 #include "provider.h"
-#include "ciphers.h"
+
+struct rte_ring *shared_ring;
+// mempools created by backend
+struct rte_mempool* sym_crypto_session_pool;
+struct rte_mempool* sym_crypto_op_mempool;
+struct rte_mempool* pktmbuf_mempool;
 
 // for OpenSSL to get information about the provider
 // e.g. version & name
@@ -22,3 +28,7 @@ static OSSL_FUNC_provider_get_capabilities_fn vcrypto_get_capabilities;
 static OSSL_FUNC_provider_self_test_fn vcrypto_self_test;
 
  
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
+                       const OSSL_DISPATCH **out, void **provctx) {
+  
+}

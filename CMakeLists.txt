@@ -38,6 +38,7 @@ target_include_directories(klib INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/klib
 )
 
+# using pkg-config to look for dpdk
 find_package(PkgConfig REQUIRED)
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(DPDK "libdpdk")
@@ -65,6 +66,11 @@ if(NOT RELEASE_MODE)
   )
 endif()
 
+# common library , customed, used by both frontend and backend
+add_library(common INTERFACE)
+target_include_directories(common INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 add_subdirectory(utils)
 add_subdirectory(frontend)

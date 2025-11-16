@@ -1,13 +1,18 @@
+#include <rte_mempool.h>
 #include <rte_ring.h>
 #include <rte_ring_core.h>
 
 #include <log.h>
 #include <socket.h>
+#include <defs.h>
 
 #include "protocol.h"
 #include "aes_cbc.h"
 
 extern struct rte_ring *shared_ring;
+extern struct rte_mempool* sym_crypto_session_pool;
+extern struct rte_mempool* sym_crypto_op_mempool;
+extern struct rte_mempool* pktmbuf_mempool;
 static int fe_connfd;
 static int be_connfd;
 
@@ -34,6 +39,24 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path) {
     return false;
   }
   
+  sym_crypto_session_pool = rte_mempool_lookup(SYM_CRYPTO_SESS_MP_NAME);
+  if (sym_crypto_session_pool == NULL) {
+    log_error("failed to lookup sym crypto session pool");
+    return false;
+  }
+
+  sym_crypto_op_mempool = rte_mempool_lookup(SYM_CRYPTO_OP_MP_NAME);
+  if (sym_crypto_op_mempool == NULL) {
+    log_error("failed to lookup sym crypto op mempool");
+    return false;
+  }
+
+  pktmbuf_mempool = rte_mempool_lookup(SYM_CRYPTO_MBUF_MP_NAME);
+  if (pktmbuf_mempool == NULL) {
+    log_error("failed to lookup pktmbuf mempool");
+    return false;
+  }
+
   return ret;
 }
 

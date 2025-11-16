@@ -16,6 +16,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pthread
   ${DPDK_LIBRARIES}
   klib
+  common
 )
 
 if(NOT RELEASE_NODE)

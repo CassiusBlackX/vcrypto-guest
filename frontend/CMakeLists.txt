@@ -15,6 +15,7 @@ target_link_libraries(vcrypto PRIVATE
   pthread
   ${DPDK_LIBRARIES}
   klib
+  common
 )
 
 if(NOT RELEASE_NODE)
