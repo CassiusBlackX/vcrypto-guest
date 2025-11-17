@@ -9,15 +9,15 @@
 
 #include <log.h>
 #include <socket.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "cdev.h"
 #include "sess.h"
-#include "ciphers.h"
 #include "hashmap.h"
 
-extern struct rte_mempool *sess_mp;
+extern struct rte_mempool *sym_crypto_session_pool;
 extern cdev_resource *cr;
-pthread_mutex_t sess_lock = PTHREAD_MUTEX_INITIALIZER;
 
 // algs that we are going to support
 //TODO: currently only support
@@ -30,26 +30,66 @@ static inline bool vcrypto_is_chained_cipher(int nid) {
   }
 }
 
-static struct rte_crypto_sym_session* create_sess(unsigned char* alg_elems, uint8_t cdev_id) {
-  int alg_nid = ALG_ELEMS_GET_ALG_NID(alg_elems);
-  int alg_direction = ALG_ELEMS_GET_ALG_DIRECTION(alg_elems);
-  int verify_digest = ALG_ELEMS_GET_VERIFY_DIGEST(alg_elems);
-  int cipher_key_size = ALG_ELEMS_GET_CIPHER_KEY_SIZE(alg_elems);
-  int cipher_iv_size = ALG_ELEMS_GET_CIPHER_IV_SIZE(alg_elems);
-  int auth_key_size = ALG_ELEMS_GET_AUTH_KEY_SIZE(alg_elems);
-  log_debug("%d %d %d %d %d %d", alg_nid, alg_direction, verify_digest, cipher_key_size, cipher_iv_size, auth_key_size);
+static struct rte_crypto_sym_session* create_rte_crypto_sym_sess(const cipher_auth_ctrl* cipher_auth) {
+  enum rte_crypto_cipher_algorithm alg_id = RTE_CRYPTO_CIPHER_NULL;
+  switch (cipher_auth->alg_nid) {
+    case NID_aes_128_cbc:
+    case NID_aes_256_cbc:
+      alg_id = RTE_CRYPTO_CIPHER_AES_CBC;
+      break;
+    default:
+      log_error("alg_nid: %d is not supported", cipher_auth->alg_nid);
+      return NULL;
+  }
+  enum rte_crypto_cipher_operation cipher_direction =
+     (cipher_auth->direction == CIPHER_DIRECTION_ENCRYPT)?
+     RTE_CRYPTO_CIPHER_OP_ENCRYPT : RTE_CRYPTO_CIPHER_OP_DECRYPT;
 
   struct rte_crypto_cipher_xform cipher = {
-    .algo = RTE_CRYPTO_CIPHER_
-  }
-  struct rte_crypto_sym_xform cipher_xform = {
-    .type = RTE_CRYPTO_SYM_XFORM_CIPHER,
+    .algo = alg_id,
+    .op = cipher_direction, 
+    .key.length = cipher_auth->cipher_key_len,
+    .iv.length = cipher_auth->cipher_iv_len,
+    .iv.offset = 0,  // BUG: what should iv.offset be?
+  };
+  cipher.key.data = rte_malloc("cipher.key.data", cipher_auth->cipher_key_len, 64);
+  memcpy((uint8_t*)cipher.key.data, cipher_auth->cipher_key_data, cipher_auth->cipher_key_len);
+
+  struct rte_crypto_sym_xform sym_xform = {
     .next = NULL,
+    .type = RTE_CRYPTO_SYM_XFORM_CIPHER,
+    .cipher = cipher,
   };
   
-  
-  struct rte_crypto_sym_session* sess = rte_cryptodev_sym_session_create(cdev_id, , )
+  struct rte_crypto_sym_session *sess = rte_cryptodev_sym_session_create(cr->cdev_id, &sym_xform, sym_crypto_session_pool);
 
+  rte_free((uint8_t*)cipher.key.data);
+  return sess;
+}
 
+void sess_resource_destroy(sess_resource *sr) {
+  if (!sr) {
+    log_warn("pointer sr is NULL");
+    return;
+  }
+  rte_cryptodev_sym_session_free(cr->cdev_id, sr->sess);
+  free(sr);
+}
 
+sess_resource* get_sess_resource(const cipher_auth_ctrl* cipher_auth) {
+  uint64_t hash_val = cipher_auth->alg_elems_md5;
+  sess_resource* sr = hash_map_get(hash_val);
+  if (sr) {
+    log_trace("session exists!");
+  } else {
+    sr = malloc(sizeof(sess_resource));
+    sr->sess = create_rte_crypto_sym_sess(cipher_auth);
+    sr->ref_count = 1;
+    hash_map_insert(hash_val, sr);
+  }
+  return sr;
+}
+
+void release_sess_resource(uint64_t md5_hash) {
+  hash_map_retrieve(md5_hash);
 }

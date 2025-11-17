@@ -5,17 +5,20 @@
 #include <rte_cryptodev.h>
 #include <rte_ring.h>
 
+#include "../frontend/aes_cbc.h"
+
 // TODO: the struct is not needed!
 // we can use rte_cryptodev_session_priate_data, filling the refcout inside
 typedef struct {
   struct rte_crypto_sym_session *sess;
-  size_t ret_count;
+  size_t ref_count;
 } sess_resource;
 
-// NOTE: alg_elems is used by backend to create sess, backend does not have to maintain alg_elems
-// it is `VM-Exit` during virtio-create-sess that is inefficient, transferring ~150 bytes between fe and be is acceptable
+// descturctor of type `sess_resource`
+void sess_resource_destroy(sess_resource* sr);
 
-sess_resource* get_sess_resource(uint8_t *alg_elems, uint8_t cdev_id);
-void put_sess_resource(uint64_t md5_hash);
+// used by protocol
+sess_resource* get_sess_resource(const cipher_auth_ctrl* cipher_auth);
+void release_sess_resource(uint64_t md5_hash);
 
 #endif // VCRYPTO_GUEST_BE_SESS
