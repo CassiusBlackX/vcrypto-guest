@@ -6,7 +6,7 @@
 
 #include "cdev.h"
 
-extern struct rte_mempool *sess_mp;
+extern struct rte_mempool *sym_crypto_session_pool;
 
 cdev_resource *cr = 0;
 
@@ -37,7 +37,7 @@ void vcrypto_be_cdev_resource_prepare() {
 
   struct rte_cryptodev_qp_conf qp_conf = {
     .nb_descriptors = 2048,
-    .mp_session = sess_mp,
+    .mp_session = sym_crypto_session_pool,
   };
 
   if (rte_cryptodev_queue_pair_setup(cr->cdev_id, 0, &qp_conf, 0) < 0) {

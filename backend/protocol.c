@@ -1,62 +1,48 @@
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
-
-#include <log.h>
 
 #include <rte_cryptodev.h>
 #include <rte_ring.h>
 
-#include "cdev.h"
-#include "ciphers.h"
-#include "sess.h"
-#include "protocol.h"
-#include "mempool.h"
-#include "socket.h"
+#include <log.h>
 
-extern uint32_t buf_sizes[2];
-extern uint16_t buf_offsets[2];
+#include "cdev.h"
+#include "protocol.h"
+#include "socket.h"
+#include "sess.h"
+#include "../frontend/aes_cbc.h"
 
 extern cdev_resource* cr;
 
-// rx: natural conn event
-// tx: num_obj_mps(value) + obj_mp_metas(value) + opdpipe_mp_meta(value) + cr->shared_ring->name + be_connfd(value)
-void vcrypto_be_protocol_engine_init(int be_connfd) {
-  // mempool has been allcated in backend's main thread startup
-  // cdev has been initialized in backend's main thread startup
-  // share info to frontend as well
-  // additionaly, share be_connfd to frontend
+extern struct rte_ring *shared_ring;
+extern struct rte_mempool* sym_crypto_session_pool;
+extern struct rte_mempool* sym_crypto_op_mempool;
+extern struct rte_mempool* pktmbuf_mempool;
 
-  // 1 share mempool info to fe
-  // 1.1 prepare crypto_op mempool info
-  obj_mp_meta *obj_ms = (obj_mp_meta*)calloc(NUM_OBJ_MP, sizeof(obj_mp_meta));
-  for (size_t i = 0; i < NUM_OBJ_MP; i++) {
-    obj_mp_meta* meta = ((obj_mp_meta*)(obj_ms + i));
-    snprintf(meta->obj_mp_name, sizeof(meta->obj_mp_name), "obj_mp_%zu", i);
-    meta->obj_mp_buf_size = buf_sizes[i];
-    meta->obj_mp_buf_offset = buf_offsets[i];
+bool vcrypto_be_protocol_engine_init(int be_connfd) {
+  if (be_connfd < 0) {
+    log_error("invalid be_connfd");
+    return false;
   }
-  // 1.2 prepare opdone mempool info
-  opdpipe_mp_meta *opdpipe_m = (opdpipe_mp_meta*)calloc(1, sizeof(opdpipe_mp_meta));
-  snprintf(opdpipe_m->opdpipe_mp_name, sizeof(opdpipe_m->opdpipe_mp_name), "opdpipe_mp");
 
-  // 2. response mempool info
-  // 2.1 response crypto_op mempool info
-  int num_obj_mp = NUM_OBJ_MP;
-  vcrypto_send(be_connfd, &num_obj_mp, sizeof(num_obj_mp));
-  vcrypto_send(be_connfd, obj_ms, sizeof(obj_mp_meta) * num_obj_mp);
-  free(obj_ms);
-  // 2.2 response opdone mempool info
-  vcrypto_send(be_connfd, opdpipe_m, sizeof(opdpipe_m));
-  free(opdpipe_m);
-
-  // 3. response cr->shared_ring info (name)
-  vcrypto_send(be_connfd, cr->shared_ring->name, sizeof(cr->shared_ring->name));
-
-  // 4. response be_connfd info
-  vcrypto_send(be_connfd, &be_connfd, sizeof(be_connfd));
+  bool ret = true;
+  ret &= vcrypto_send(be_connfd, cr->shared_ring->name, sizeof(cr->shared_ring->name));
+  ret &= vcrypto_send(be_connfd, &be_connfd, sizeof(be_connfd));
+  return ret;
 }
 
-// rx: (msg_type +)akg)elems[SIZE_ALG_ELEMS] (value)
-// tx: sess pointer
+bool vcrypto_be_protocol_create_sess(int be_connfd) {
+  cipher_auth_ctrl cipher_auth;
+  bool ret = true;
+  ret &= vcrypto_recv(be_connfd, &cipher_auth, sizeof(cipher_auth));
+  sess_resource *sr =  get_sess_resource(&cipher_auth); 
+  ret &= vcrypto_send(be_connfd, sr->sess, sizeof(sr->sess));
+  return ret;
+}
+
+bool vcrypto_be_protocol_remove_sess(int be_connfd) {
+  uint64_t hash_val;
+  bool ret = vcrypto_recv(be_connfd, &hash_val, sizeof(hash_val));
+  release_sess_resource(hash_val);
+  return ret;
+}

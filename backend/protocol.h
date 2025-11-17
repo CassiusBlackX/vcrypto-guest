@@ -1,6 +1,7 @@
 #ifndef VCRYPTO_GUEST_BE_PROTOCOL_H
 #define VCRYPTO_GUEST_BE_PROTOCOL_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 enum msg_type_cmd {
@@ -20,10 +21,10 @@ typedef struct {
   char opdpipe_mp_name[16];
 } opdpipe_mp_meta;
 
-void vcrypto_be_protocol_engine_init(int connfd);
-void vcrypto_be_protocol_create_sess(int connfd);
-void vcrypto_be_protocol_remove_sess(int connfd);
-void vcrypto_be_protocol_create_async_fd(int connfd, int *be_fd_to_connfd);
-void vcrypto_be_protocol_remove_async_fd(int connfd, int *be_fd_to_connfd);
+bool vcrypto_be_protocol_engine_init(int connfd);
+bool vcrypto_be_protocol_create_sess(int connfd);
+bool vcrypto_be_protocol_remove_sess(int connfd);
+bool vcrypto_be_protocol_create_async_fd(int connfd, int *be_fd_to_connfd);
+bool vcrypto_be_protocol_remove_async_fd(int connfd, int *be_fd_to_connfd);
 
 #endif // VCRYPTO_GUEST_BE_PROTOCOL_H

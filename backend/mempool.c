@@ -30,7 +30,7 @@ bool vcrypto_be_mempool_prepare() {
     log_error("sym_crypto_session_pool create failed");
     return false;
   }
-  pktmbuf_mempool = rte_pktmbuf_pool_create(SYM_CRYPTO_MBUF_MP,
+  pktmbuf_mempool = rte_pktmbuf_pool_create(SYM_CRYPTO_MBUF_MP_NAME,
                                             SYM_CRYPTO_MBUF_NUM ,
                                             0, sizeof(struct rte_crypto_op),
                                             SYM_CRYPTO_MBUF_SIZE,
@@ -39,7 +39,7 @@ bool vcrypto_be_mempool_prepare() {
     log_error("pktmbuf_mempool create failed");
     return false;
   }
-  sym_crypto_op_mempool = rte_crypto_op_pool_create(SYM_CRYPTO_OP_MP,
+  sym_crypto_op_mempool = rte_crypto_op_pool_create(SYM_CRYPTO_OP_MP_NAME,
                                                     RTE_CRYPTO_OP_TYPE_SYMMETRIC,
                                                     SYM_CRYPTO_OP_POOL_SIZE,
                                                     0,
@@ -54,7 +54,10 @@ bool vcrypto_be_mempool_prepare() {
 
 void vcrypto_be_mempool_cleanup() {
   rte_mempool_free(sym_crypto_session_pool);
+  log_debug("sym_crypto_session_pool freed");
   rte_mempool_free(sym_crypto_op_mempool);
+  log_debug("sym_crypto_op_mempool freed");
   rte_mempool_free(pktmbuf_mempool);
+  log_debug("pktmbuf_mempool freed");
   sym_crypto_session_pool = sym_crypto_op_mempool = pktmbuf_mempool = NULL;
 }
