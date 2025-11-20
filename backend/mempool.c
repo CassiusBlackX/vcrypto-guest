@@ -13,8 +13,6 @@
 #include "mempool.h"
 #include "cdev.h"
 
-extern cdev_resource* cr;
-
 struct rte_mempool* sym_crypto_session_pool;
 struct rte_mempool* sym_crypto_op_mempool;
 struct rte_mempool* pktmbuf_mempool;

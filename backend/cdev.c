@@ -5,8 +5,7 @@
 #include <log.h>
 
 #include "cdev.h"
-
-extern struct rte_mempool *sym_crypto_session_pool;
+#include "mempool.h"
 
 cdev_resource *cr = 0;
 

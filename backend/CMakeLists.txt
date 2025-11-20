@@ -3,7 +3,7 @@ project(vcrypto_engine_backend LANGUAGES C)
 
 add_executable(${PROJECT_NAME}
   main.c
-  loop.c
+  event.c
   protocol.c
   mempool.c
   cdev.c

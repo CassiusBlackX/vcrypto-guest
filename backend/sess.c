@@ -16,9 +16,6 @@
 #include "sess.h"
 #include "hashmap.h"
 
-extern struct rte_mempool *sym_crypto_session_pool;
-extern cdev_resource *cr;
-
 // algs that we are going to support
 //TODO: currently only support
 // aes-256-cbc-hmac-sha1, aes-128-cbc-hmac-sha1, aes-256-cbc, aes-128-cbc

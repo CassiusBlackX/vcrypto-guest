@@ -6,8 +6,6 @@
 #include <rte_cryptodev.h>
 #include <rte_ring.h>
 
-#include "ciphers.h"
-
 #define MAX_NUM_OPS_PER_BURST 64
 #define SHARED_RING_INITIAL_SIZE 1024
 
@@ -21,4 +19,5 @@ typedef struct {
 void vcrypto_be_cdev_resource_prepare();
 void vcrypto_be_cdev_resource_cleanup();
 
+extern cdev_resource* cr;
 #endif // VCRYPTO_GUEST_BE_CDEV_H

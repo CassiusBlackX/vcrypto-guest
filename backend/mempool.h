@@ -10,8 +10,11 @@
 #define SYM_CRYPTO_MBUF_NUM 16384
 #define SYM_CRYPTO_MBUF_SIZE 2048
 
-
 bool vcrypto_be_mempool_prepare();
 void vcrypto_be_mempool_cleanup();
+
+extern struct rte_mempool* sym_crypto_session_pool;
+extern struct rte_mempool* sym_crypto_op_mempool;
+extern struct rte_mempool* pktmbuf_mempool;
 
 #endif // VCRYPTO_GUEST_BE_MEMPOOL_H
