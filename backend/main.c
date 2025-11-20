@@ -1,6 +1,45 @@
-#include <log.h>
+#include <assert.h>
+#include <signal.h>
 
-int main() {
+#include <rte_eal.h>
+
+#include <log.h>
+#include <unistd.h>
+
+#include "event.h"
+#include "cdev.h"
+#include "mempool.h"
+
+static void SIGINT_handler(int id) {
+  (void)id;  // depress unused warning
+  running = 0;
+}
+
+int main(int argc, char **argv) {
   log_set_level(LOG_TRACE);
-  log_trace("hello world!");
+  log_info("vcrypto_daemon starting...");
+  
+  signal(SIGINT, SIGINT_handler);
+
+  int ret = rte_eal_init(argc, argv);
+  assert(rte_eal_process_type() == RTE_PROC_PRIMARY && "vcrypto daemon process has to be a dpdk primary process\n");
+
+  vcrypto_be_cdev_resource_prepare();
+  ret &= vcrypto_be_mempool_prepare();
+  int listen_fd = 0, epoll_fd = 0;
+  ret &= init_server(SOCKET_FILE_ABSOLUTE_PATH, &listen_fd, &epoll_fd);
+  vcrypto_be_mainloop(listen_fd, epoll_fd);
+
+  log_info("cleaning cdev_resource");
+  vcrypto_be_cdev_resource_cleanup();  
+
+  log_info("cleaning mempool");
+  vcrypto_be_mempool_cleanup();
+
+  log_info("cleaning socket");
+  close(listen_fd);
+  close(epoll_fd);
+  unlink(SOCKET_FILE_ABSOLUTE_PATH);
+
+  return 0;
 }
