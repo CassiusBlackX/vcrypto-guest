@@ -11,7 +11,8 @@
 
 typedef struct {
   uint8_t cdev_id;
-  struct rte_ring *shared_ring;
+  struct rte_ring *tx_ring;
+  struct rte_ring *rx_ring;
   struct rte_crypto_op ** ops;
   int num_valid_ops;
 } cdev_resource;

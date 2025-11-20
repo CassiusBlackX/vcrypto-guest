@@ -13,12 +13,6 @@
 #include "provider.h"
 #include "protocol.h"
 
-struct rte_ring *shared_ring;
-// mempools created by backend
-struct rte_mempool* sym_crypto_session_pool;
-struct rte_mempool* sym_crypto_op_mempool;
-struct rte_mempool* pktmbuf_mempool;
-
 // for OpenSSL to get information about the provider
 // shutdown provider and destroy its context
 static OSSL_FUNC_provider_teardown_fn vcrypto_teardown;

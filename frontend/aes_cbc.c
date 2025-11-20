@@ -21,11 +21,6 @@
 #include "aes_cbc.h"
 #include "protocol.h"
 
-extern struct rte_ring *shared_ring;
-extern struct rte_mempool* sym_crypto_session_pool;
-extern struct rte_mempool* sym_crypto_op_mempool;
-extern struct rte_mempool* pktmbuf_mempool;
-
 void *vcrypto_aes_cbc_newctx(void *provctx) {
   vcrypto_aes_cbc_ctx *ctx = OPENSSL_zalloc(sizeof((*ctx)));
   if (!ctx) {
@@ -192,7 +187,7 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl, size_t 
   memcpy(iv_ptr, ctx->cipher_auth.cipher_iv_data, ctx->cipher_auth.cipher_iv_len);
 
   // 8. send to daemon
-  if (rte_ring_enqueue(shared_ring, op) != 0) {
+  if (rte_ring_enqueue(tx_ring, op) != 0) {
     rte_crypto_op_free(op);
     rte_pktmbuf_free(mbuf);
     log_error("enqueue to backend the crypto op failed");
@@ -201,13 +196,18 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl, size_t 
 
   // 9. wait for response, NOTE: sync version!
   struct rte_crypto_op *completed_op = NULL;
-  while (rte_ring_dequeue(shared_ring, (void**)&completed_op) != 0) {
+  while (rte_ring_dequeue(rx_ring, (void**)&completed_op) != 0) {
     rte_pause();
   }
 
-  if (!completed_op || completed_op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
+  if (!completed_op) {
+    log_error("got NULL for completed_op");
+    return 0;
+  }
+  if (completed_op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
     rte_crypto_op_free(completed_op);
-    log_error("crypto operation failed at backend!");
+    log_error("crypto operation process failed at backend");
+    return 0;
   }
 
   // 10. copy result

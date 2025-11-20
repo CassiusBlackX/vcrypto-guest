@@ -9,10 +9,11 @@
 #include "protocol.h"
 #include "aes_cbc.h"
 
-extern struct rte_ring *shared_ring;
-extern struct rte_mempool* sym_crypto_session_pool;
-extern struct rte_mempool* sym_crypto_op_mempool;
-extern struct rte_mempool* pktmbuf_mempool;
+struct rte_ring *tx_ring;
+struct rte_ring *rx_ring;
+struct rte_mempool* sym_crypto_session_pool;
+struct rte_mempool* sym_crypto_op_mempool;
+struct rte_mempool* pktmbuf_mempool;
 static int fe_connfd;
 static int be_connfd;
 
@@ -25,11 +26,21 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path) {
 
   bool ret = true;
 
-  char shared_ring_name[16] = {0};
-  ret &= vcrypto_recv(fe_connfd, shared_ring_name, 16);
-  shared_ring = rte_ring_lookup(shared_ring_name);
-  if (shared_ring == NULL) {
-    log_error("failed to find the shared_ring with vcrypto_daemon");
+  // be's tx is fe's rx
+  // receive the rx_ring_name first
+  char rx_ring_name[16] = {0};
+  ret &= vcrypto_recv(fe_connfd, rx_ring_name, 16);
+  rx_ring= rte_ring_lookup(rx_ring_name);
+  if (rx_ring  == NULL) {
+    log_error("failed to find the rx_ring with vcrypto_daemon");
+    return false;
+  }
+  // receive tx_ring name
+  char tx_ring_name[16] = {0};
+  ret &= vcrypto_recv(fe_connfd, tx_ring_name, 16);
+  tx_ring= rte_ring_lookup(tx_ring_name);
+  if (tx_ring  == NULL) {
+    log_error("failed to find the rx_ring with vcrypto_daemon");
     return false;
   }
 

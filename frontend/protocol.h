@@ -1,7 +1,6 @@
 #ifndef VCRYPTO_GUEST_FE_PROTOCOL_H
 #define VCRYPTO_GUEST_FE_PROTOCOL_H
 
-#include <stdint.h>
 #include <stdbool.h>
 
 #include "aes_cbc.h"
@@ -17,5 +16,10 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path);
 bool vcrypto_fe_protocol_create_sess(vcrypto_aes_cbc_ctx* ctx);
 bool vcrypto_fe_protocol_remove_sess(vcrypto_aes_cbc_ctx* ctx);
 
+extern struct rte_ring *tx_ring;
+extern struct rte_ring *rx_ring;
+extern struct rte_mempool* sym_crypto_session_pool;
+extern struct rte_mempool* sym_crypto_op_mempool;
+extern struct rte_mempool* pktmbuf_mempool;
 
 #endif  // VCRYPTO_GUEST_FE_PROTOCOL_H

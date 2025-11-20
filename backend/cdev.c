@@ -48,12 +48,18 @@ void vcrypto_be_cdev_resource_prepare() {
     exit(1);
   }
 
-  char ring_name[16];
-  snprintf(ring_name, sizeof(ring_name), "shared_ring_%d", cdev_ids[0]);
-
-  cr->shared_ring = rte_ring_create(ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
-  if (cr->shared_ring == 0) {
-    log_error("cannot allocate shared_ring");
+  char tx_ring_name[16] = {0};
+  snprintf(tx_ring_name, sizeof(tx_ring_name), "tx_ring_%d", cdev_ids[0]);
+  cr->tx_ring = rte_ring_create(tx_ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
+  if (cr->tx_ring == 0) {
+    log_error("cannot allocate tx_ring");
+    exit(1);
+  }
+  char rx_ring_name[16] = {0};
+  snprintf(rx_ring_name, sizeof(rx_ring_name), "rx_ring_%d", cdev_ids[0]);
+  cr->rx_ring = rte_ring_create(rx_ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
+  if (cr->rx_ring== 0) {
+    log_error("cannot allocate rx_ring");
     exit(1);
   }
 
@@ -71,6 +77,6 @@ void vcrypto_be_cdev_resource_cleanup() {
   rte_cryptodev_stop(cr->cdev_id);
   log_info("vcrypto dev %d stopped", cr->cdev_id);
   free(cr->ops);
-  rte_ring_free(cr->shared_ring);
+  rte_ring_free(cr->tx_ring);
   free(cr);
 }

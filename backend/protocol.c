@@ -12,15 +12,16 @@
 #include "sess.h"
 #include "../frontend/aes_cbc.h"
 
-bool vcrypto_be_protocol_engine_init(int cliend_fd) {
-  if (cliend_fd < 0) {
+bool vcrypto_be_protocol_engine_init(int client_fd) {
+  if (client_fd < 0) {
     log_error("invalid be_connfd");
     return false;
   }
 
   bool ret = true;
-  ret &= vcrypto_send(cliend_fd, cr->shared_ring->name, sizeof(cr->shared_ring->name));
-  ret &= vcrypto_send(cliend_fd, &cliend_fd, sizeof(cliend_fd));
+  ret &= vcrypto_send(client_fd, cr->tx_ring->name, sizeof(cr->tx_ring->name));
+  ret &= vcrypto_send(client_fd, cr->rx_ring->name, sizeof(cr->rx_ring->name));
+  ret &= vcrypto_send(client_fd, &client_fd, sizeof(client_fd));
   return ret;
 }
 

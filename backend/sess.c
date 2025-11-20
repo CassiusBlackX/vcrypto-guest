@@ -15,6 +15,7 @@
 #include "cdev.h"
 #include "sess.h"
 #include "hashmap.h"
+#include "mempool.h"
 
 // algs that we are going to support
 //TODO: currently only support
