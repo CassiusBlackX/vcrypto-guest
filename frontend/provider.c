@@ -124,6 +124,7 @@ static void vcrypto_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE 
  
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out, void **provctx) {
+  log_set_level(LOG_TRACE);
   char *argv[8] = {
     "vcrypto_engine_backend", "--file-prefix=rte", "--proc-type=scondary", "--log-level", "4", 0};
   if (rte_eal_init(5, argv) < 0) {
