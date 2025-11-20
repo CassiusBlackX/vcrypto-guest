@@ -15,6 +15,7 @@ extern volatile sig_atomic_t running;
 bool init_server(const char* socket_path, int *listen_fd, int *epoll_fd);
 
 int vcrypto_be_mainloop(int listen_fd, int epoll_fd);
+int mainloop(int listen_fd, int epoll_fd);
 
 
 

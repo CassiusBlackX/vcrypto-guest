@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <rte_cryptodev.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -12,6 +11,7 @@
 #include <unistd.h>
 
 #include <rte_crypto.h>
+#include <rte_cryptodev.h>
 
 #include <log.h>
 #include <socket.h>
@@ -35,7 +35,7 @@ bool init_server(const char *socket_path, int *out_listen_fd,
 
   // delete old socket file
   unlink(socket_path);
-
+   
   // create listen fd
   listen_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (listen_fd < 0) {
