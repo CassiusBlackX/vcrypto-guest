@@ -39,13 +39,27 @@ target_include_directories(klib INTERFACE
 )
 
 # using pkg-config to look for dpdk
+# NOTE: in order to find dpdk using pkg-config
+# it is recommended to search `libdpdk.pc`'s path and add the output
+# into `PKG_CONFIG_PATH`
+# e.g. `export PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:$PKG_CONFIG_PATH"`
 find_package(PkgConfig REQUIRED)
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(DPDK "libdpdk")
   if(DPDK_FOUND)
     message(STATUS "found dpdk via pkg-config")
   else()
-    message(WARN "unable to find dpdk via pkg-config")
+    message(WARNING
+[=[
+DPDK not found via pkg-config.
+Please ensure 'libdpdk.pc' is installed and visible to pkg-config.
+To fix this:
+  1. Locate libdpdk.pc:
+       find /usr -name libdpdk.pc 2>/dev/null
+  2. Add its directory to PKG_CONFIG_PATH, e.g.:
+       export PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:$PKG_CONFIG_PATH"
+  3. Re-run cmake.
+]=])
   endif()
 endif()
 
