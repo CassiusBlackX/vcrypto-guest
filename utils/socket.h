@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// return true on success, else false
-bool vcrypto_socket_set_non_blocking(int fd);
 // return conn_fd on success
 // return -1 on failure
 int vcrypto_connect(char* socket_file_path);

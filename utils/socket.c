@@ -14,20 +14,6 @@
 
 #include "socket.h"
 
-bool vcrypto_socket_set_non_blocking(int fd) {
-  int flags = fcntl(fd, F_GETFL, NULL);
-  if (flags < 0) {
-    log_error("fcntl F_GETFL failed, %s", strerror(errno));
-    return false;
-  }
-  flags |= O_NONBLOCK;
-  if (fcntl(fd, F_SETFL, flags) < 0) {
-    log_error("fcntl F_SETFL failed, %s", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
 int vcrypto_connect(char* socket_file_path) {
   int conn_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (conn_fd < 0) {
