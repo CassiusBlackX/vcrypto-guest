@@ -86,6 +86,8 @@ target_include_directories(common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+link_directories(/usr/local/lib64)
+
 add_subdirectory(utils)
 add_subdirectory(frontend)
 add_subdirectory(backend)
