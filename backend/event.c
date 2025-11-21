@@ -180,6 +180,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
   bool client_fds[MAX_NUM_BE_FDS] = {0};
   // in case the expr above did not set client_fds to all 0
   memset(client_fds, 0, sizeof(client_fds)/sizeof(client_fds[0]));
+  log_trace("going into mainloop");
 
   while (running) {
     // ctrontol plane

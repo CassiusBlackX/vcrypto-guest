@@ -2,7 +2,7 @@
 #define VCRYPTO_GUEST_BE_EVENT_H
 
 #define MAX_NUM_FE_PROCESSES 1024
-#define MAX_NUM_BE_FDS 1024*1024
+#define MAX_NUM_BE_FDS 1024
 #define SOCKET_FILE_ABSOLUTE_PATH "/tmp/vcrypto_engine.socket"
 
 #include <signal.h>

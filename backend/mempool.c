@@ -18,7 +18,9 @@ struct rte_mempool* sym_crypto_op_mempool;
 struct rte_mempool* pktmbuf_mempool;
 
 bool vcrypto_be_mempool_prepare() {
+  log_trace("entering vcrypto_be_mempool_prepare");
   size_t session_size = rte_cryptodev_sym_get_private_session_size(cr->cdev_id);
+  log_trace("session_size: %d", session_size);
   sym_crypto_session_pool = rte_cryptodev_sym_session_pool_create(SYM_CRYPTO_SESS_MP_NAME,
                                                                   SYM_SESSION_POOL_NUM_ELEMS,
                                                                   session_size,
@@ -28,6 +30,9 @@ bool vcrypto_be_mempool_prepare() {
     log_error("sym_crypto_session_pool create failed");
     return false;
   }
+  log_trace("sym_crypto_session_pool created success");
+
+  log_trace("going to create pktmbuf_mempool");
   pktmbuf_mempool = rte_pktmbuf_pool_create(SYM_CRYPTO_MBUF_MP_NAME,
                                             SYM_CRYPTO_MBUF_NUM ,
                                             0, sizeof(struct rte_crypto_op),
@@ -37,6 +42,9 @@ bool vcrypto_be_mempool_prepare() {
     log_error("pktmbuf_mempool create failed");
     return false;
   }
+  log_trace("pktmbuf_mempool created success");
+
+  log_trace("going to create sym_crypto_op_mempool ");
   sym_crypto_op_mempool = rte_crypto_op_pool_create(SYM_CRYPTO_OP_MP_NAME,
                                                     RTE_CRYPTO_OP_TYPE_SYMMETRIC,
                                                     SYM_CRYPTO_OP_POOL_SIZE,
@@ -47,6 +55,9 @@ bool vcrypto_be_mempool_prepare() {
     log_error("sym_crypto_op_mempool create failed");
     return false;
   }
+  log_trace("sym_crypto_op_mempool created success");
+
+  log_trace("leaving vcrypto_be_mempool_prepare");
   return true;
 }
 

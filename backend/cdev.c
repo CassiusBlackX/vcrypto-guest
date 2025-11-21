@@ -11,9 +11,10 @@ cdev_resource *cr = 0;
 
 void vcrypto_be_cdev_resource_prepare() {
   uint8_t cdev_ids[64] = {0};
-  int num_cdevs = rte_cryptodev_devices_get("crypto_virtio", cdev_ids, 64);
-  if (num_cdevs <= 0) {
-    log_error("no crypto dev available!");
+  log_trace("going to rte_cryptodev_devices_get");
+  uint8_t num_cdevs = rte_cryptodev_devices_get("crypto_openssl", cdev_ids, 64);
+  if (num_cdevs == 0) {
+    log_error("no crypto dev available!, num_cdevs: %d", num_cdevs);
     exit(1);
   }
 
@@ -69,6 +70,8 @@ void vcrypto_be_cdev_resource_prepare() {
     exit(1);
   }
   cr->num_valid_ops = 0;
+
+  log_trace("leaving vcrypto_be_cdev_resource_prepare");
 }
 
 void vcrypto_be_cdev_resource_cleanup() {
