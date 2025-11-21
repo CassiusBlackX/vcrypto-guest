@@ -1,4 +1,6 @@
 #include <generic/rte_pause.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/types.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -251,3 +253,18 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl, size_t 
 
   return 1;
 }
+
+const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[] = {
+  {OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))vcrypto_aes_cbc_newctx},
+  {OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))vcrypto_aes_cbc_freectx},
+  {OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))vcrypto_aes_cbc_einit},
+  {OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))vcrypto_aes_cbc_dinit},
+  {OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))vcrypto_aes_cbc_cipher},
+};
+const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[] = {
+  {OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))vcrypto_aes_cbc_newctx},
+  {OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))vcrypto_aes_cbc_freectx},
+  {OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))vcrypto_aes_cbc_einit},
+  {OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))vcrypto_aes_cbc_dinit},
+  {OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))vcrypto_aes_cbc_cipher},
+};
