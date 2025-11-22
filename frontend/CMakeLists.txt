@@ -18,6 +18,14 @@ target_link_libraries(vcrypto PRIVATE
   common
 )
 
+if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
+  set_target_properties(vcrypto PROPERTIES
+    BUILD_RPATH ${DPDK_LIBRARY_DIRS}
+    INSTALL_RPATH ${DPDK_LIBRARY_DIRS}
+  )
+  message(STATUS "adding dpdk_library_dirs into vcrypto.so's rpath")
+endif()
+
 if(NOT RELEASE_NODE)
   target_link_libraries(vcrypto PRIVATE
     log_c_shared

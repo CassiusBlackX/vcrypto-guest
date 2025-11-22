@@ -47,6 +47,7 @@ find_package(PkgConfig REQUIRED)
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(DPDK "libdpdk")
   if(DPDK_FOUND)
+    list(JOIN DPDK_LIBRARY_DIRS ":" DPDK_RPATH)
     message(STATUS "found dpdk via pkg-config")
   else()
     message(WARNING
@@ -86,7 +87,12 @@ target_include_directories(common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-link_directories(/usr/local/lib64)
+# when `RPATH` is not set, but with the following line
+# program could also work~
+# but without RPATH nor the following line, exe would not be
+# able to find DLL at runtime
+# this is not really making sense~~
+# link_directories(/usr/local/lib64)
 
 add_subdirectory(utils)
 add_subdirectory(frontend)

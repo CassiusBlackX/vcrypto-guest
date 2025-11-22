@@ -19,6 +19,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   common
 )
 
+if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    BUILD_RPATH ${DPDK_LIBRARY_DIRS}
+    INSTALL_RPATH ${DPDK_LIBRARY_DIRS}
+  )
+  message(STATUS "adding dpdk_library_dirs into ${PROJECT_NAME}'s rpath")
+endif()
+
 if(NOT RELEASE_NODE)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     log_c_shared

@@ -6,4 +6,13 @@ target_link_libraries(vcrypto_test PRIVATE
   log_c
   crypto
   pthread
+  ${DPDK_LIBRARIES}
 )
+
+if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
+  set_target_properties(vcrypto_test PROPERTIES
+    BUILD_RPATH ${DPDK_LIBRARY_DIRS}
+    INSTALL_RPATH ${DPDK_LIBRARY_DIRS}
+
+  )
+endif()
