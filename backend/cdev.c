@@ -1,8 +1,10 @@
 #include <rte_cryptodev.h>
+#include <rte_lcore.h>
 #include <rte_malloc.h>
 #include <rte_ring.h>
 
 #include <log.h>
+#include <rte_ring_core.h>
 
 #include "cdev.h"
 #include "mempool.h"
@@ -51,17 +53,21 @@ void vcrypto_be_cdev_resource_prepare() {
 
   char tx_ring_name[16] = {0};
   snprintf(tx_ring_name, sizeof(tx_ring_name), "tx_ring_%d", cdev_ids[0]);
-  cr->tx_ring = rte_ring_create(tx_ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
+  cr->tx_ring = rte_ring_create(tx_ring_name, SHARED_RING_INITIAL_SIZE, rte_socket_id(), RING_F_SP_ENQ | RING_F_MC_RTS_DEQ );
   if (cr->tx_ring == 0) {
     log_error("cannot allocate tx_ring");
     exit(1);
+  } else {
+    log_trace("created cr->tx_ring: %s", cr->tx_ring->name);
   }
   char rx_ring_name[16] = {0};
   snprintf(rx_ring_name, sizeof(rx_ring_name), "rx_ring_%d", cdev_ids[0]);
-  cr->rx_ring = rte_ring_create(rx_ring_name, SHARED_RING_INITIAL_SIZE, 0, 0);
+  cr->rx_ring = rte_ring_create(rx_ring_name, SHARED_RING_INITIAL_SIZE, rte_socket_id(), RING_F_MP_RTS_ENQ | RING_F_SC_DEQ);
   if (cr->rx_ring== 0) {
     log_error("cannot allocate rx_ring");
     exit(1);
+  } else {
+    log_trace("created cr->rx_ring: %s", cr->rx_ring->name);
   }
 
   cr->ops = (struct rte_crypto_op**)malloc(sizeof(struct rte_crypto_op*) * MAX_NUM_OPS_PER_BURST);
