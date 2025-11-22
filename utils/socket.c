@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -77,6 +76,7 @@ bool vcrypto_recvmsg(int connfd, void* recv_data_buf, size_t recv_len, int *recv
     if (recv_len_partial < 0) {
       if (errno == EAGAIN) {
         log_info("EAGAIN in vcrypto_recvmsg!");
+        usleep(USLEEP_TIME);
         continue;
       } else {
         log_error("error in vcrypto_recvmsg, with errno: %s", strerror(errno));
@@ -143,6 +143,7 @@ bool vcrypto_sendmsg(int connfd, void* send_data_buf, size_t send_len, int send_
     if (send_len_partial < 0) {
       if (errno == EAGAIN) {
         log_info("EAGAIN in vcrypto_sendmsg!");
+        usleep(USLEEP_TIME);
         continue;
       } else {
         log_error("error in vcrypto_sendmsg, with errno: %s", strerror(errno));
@@ -176,6 +177,7 @@ bool vcrypto_recv(int connfd, void* recv_data_buf, size_t recv_len) {
     if (recv_len_partial < 0) {
       if (errno == EAGAIN) {
         log_info("EAGAIN in vcrypto_recv");
+         usleep(USLEEP_TIME);
         continue;
       } else {
         log_error("error in vcrypto_recv, with errno: %s", strerror(errno));
@@ -203,6 +205,7 @@ bool vcrypto_send(int connfd, void* send_data_buf, size_t send_len) {
     if (send_len_partial < 0) {
       if (errno == EAGAIN) {
         log_info("EAGAIN in vcrypto_send");
+        usleep(USLEEP_TIME);
         continue;
       } else {
         log_error("error in vcrypto_send, with errno: %s", strerror(errno));

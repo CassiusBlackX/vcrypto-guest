@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#define USLEEP_TIME 1000 
+
 // return conn_fd on success
 // return -1 on failure
 int vcrypto_connect(char* socket_file_path);
