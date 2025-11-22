@@ -32,16 +32,25 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path) {
   ret &= vcrypto_recv(fe_connfd, rx_ring_name, 16);
   rx_ring= rte_ring_lookup(rx_ring_name);
   if (rx_ring  == NULL) {
-    log_error("failed to find the rx_ring with vcrypto_daemon");
+    log_error("failed to find the rx_ring: %s with vcrypto_daemon", rx_ring_name);
     return false;
+  } else {
+    log_trace("success found rx_ring: %s", rx_ring_name);
   }
   // receive tx_ring name
   char tx_ring_name[16] = {0};
   ret &= vcrypto_recv(fe_connfd, tx_ring_name, 16);
+  if (ret) {
+    log_trace("receive from backend, tx_ring_name: %s", tx_ring_name);
+  } else {
+    log_error("did not receive from backend!");
+  }
   tx_ring= rte_ring_lookup(tx_ring_name);
   if (tx_ring  == NULL) {
-    log_error("failed to find the rx_ring with vcrypto_daemon");
+    log_error("failed to find the tx_ring: %s with vcrypto_daemon", tx_ring_name);
     return false;
+  } else {
+    log_trace("success found tx_ring: %s", tx_ring_name);
   }
 
   ret &= vcrypto_recv(fe_connfd, &be_connfd, sizeof(be_connfd));

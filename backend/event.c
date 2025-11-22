@@ -37,6 +37,7 @@ bool init_server(const char *socket_path, int *out_listen_fd,
   unlink(socket_path);
    
   // create listen fd
+  // BUG: so far, we can not communicate successfully if using SOCK_NONBLOCK
   listen_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (listen_fd < 0) {
     log_error("failed to create listen_fd with err: %s", strerror(errno));
