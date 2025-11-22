@@ -91,4 +91,4 @@ link_directories(/usr/local/lib64)
 add_subdirectory(utils)
 add_subdirectory(frontend)
 add_subdirectory(backend)
-
+add_subdirectory(tests)
