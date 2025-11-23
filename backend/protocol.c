@@ -21,10 +21,10 @@ bool vcrypto_be_protocol_engine_init(int client_fd) {
 
   bool ret = true;
   ret &= vcrypto_send(client_fd, cr->tx_ring->name, sizeof(cr->tx_ring->name));
-  if (ret) log_trace("sent cr->tx_ring->name: %s", cr->tx_ring->name);
+  if (ret) log_trace("sent bytes: %d cr->tx_ring->name: %s", sizeof(cr->tx_ring->name), cr->tx_ring->name);
   usleep(100);  // FIXME: sleep a little time or we will send failed!
   ret &= vcrypto_send(client_fd, cr->rx_ring->name, sizeof(cr->rx_ring->name));
-  if (ret) log_trace("sent cr->rx_ring->name: %s", cr->rx_ring->name);
+  if (ret) log_trace("sent bytes: %d cr->rx_ring->name: %s", sizeof(cr->rx_ring->name), cr->rx_ring->name);
   usleep(100);  // FIXME: sleep a little time or we will send failed!
   ret &= vcrypto_send(client_fd, &client_fd, sizeof(client_fd));
   if (ret) log_trace("sent client_fd: %d", client_fd);

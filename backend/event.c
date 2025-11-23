@@ -37,7 +37,6 @@ bool init_server(const char *socket_path, int *out_listen_fd,
   unlink(socket_path);
    
   // create listen fd
-  // BUG: so far, we can not communicate successfully if using SOCK_NONBLOCK
   listen_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (listen_fd < 0) {
     log_error("failed to create listen_fd with err: %s", strerror(errno));
@@ -196,7 +195,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
         }
         client_fds[client_fd] = true;
         if (vcrypto_be_protocol_engine_init(client_fd)) {
-          log_trace("connection handshook with client_fd");
+          log_trace("connection handshook with client_fd: %d", client_fd);
         }
       } else if (events[i].events == EPOLLIN) {
         // frontend msg

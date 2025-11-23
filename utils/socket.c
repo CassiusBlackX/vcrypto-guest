@@ -15,6 +15,7 @@
 
 int vcrypto_connect(char* socket_file_path) {
   int conn_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  // int conn_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (conn_fd < 0) {
     log_error("failed to create socket with errno: %s", strerror(errno));
     return -1;
@@ -83,7 +84,7 @@ bool vcrypto_recvmsg(int connfd, void* recv_data_buf, size_t recv_len, int *recv
         return false;
       }
     }
-    log_trace("recv %d bytes", recv_len_partial);
+    log_trace("recv %d bytes at a time", recv_len_partial);
     recv_len -= recv_len_partial;
     iov[0].iov_base += recv_len_partial;
     iov[0].iov_len = recv_len;
@@ -150,7 +151,7 @@ bool vcrypto_sendmsg(int connfd, void* send_data_buf, size_t send_len, int send_
         return false;
       }
     }
-    log_trace("send %d bytes", send_len_partial);
+    log_trace("send %d bytes at a time", send_len_partial);
     send_len -= send_len_partial;
     iov[0].iov_base += send_len_partial;
     iov[0].iov_len = send_len;
@@ -184,7 +185,7 @@ bool vcrypto_recv(int connfd, void* recv_data_buf, size_t recv_len) {
         return false;
       }
     }
-    log_trace("recv %d bytes", recv_len_partial);
+    log_trace("recv %d bytes at a time", recv_len_partial);
     recv_len -= recv_len_partial;
     recv_data_buf += recv_len_partial;  
   }
@@ -212,16 +213,16 @@ bool vcrypto_send(int connfd, void* send_data_buf, size_t send_len) {
         return false;
       }
     }
-    log_trace("send %d bytes", send_len_partial);
+    log_trace("send %d bytes at a time", send_len_partial);
     send_len -= send_len_partial;
     send_data_buf += send_len_partial;
   }
 
   if (send_len == 0) {
-    log_trace("all received in vcrypto_send");
+    log_trace("all sent in vcrypto_send");
     return true;
   } else {
-    log_error("not all received in vcrypto_send");
+    log_error("not all sent in vcrypto_send");
     return false;
   }
 }
