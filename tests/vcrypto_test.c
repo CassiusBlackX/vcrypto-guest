@@ -9,6 +9,7 @@
 #include <log.h>
 
 int main(int argc, char** argv) {
+  setenv("OPENSSL_MODULES", "/home/cassius/vcrypto_guest/build/frontend", 1);
   const unsigned char plaintext[] = "Hello vCrypto Provider";
   size_t plaintext_len = sizeof(plaintext);
 
