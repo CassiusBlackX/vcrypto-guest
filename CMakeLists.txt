@@ -4,7 +4,6 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -gdwarf-5")
 project(vcrypto_guest LANGUAGES C)
 
 option(RELEASE_MODE "Build for release: static link third-party libs" OFF)
@@ -87,6 +86,23 @@ endif()
 add_library(common INTERFACE)
 target_include_directories(common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# set compiler warning
+add_library(compiler_warnings INTERFACE)
+target_compile_options(compiler_warnings INTERFACE
+    # -Wall
+    # -Wextra
+    # -Wpedantic
+    # -Wconversion
+    # -Wsign-conversion
+    -Wshadow
+    -Wdouble-promotion
+    -Wformat=2
+    -Wimplicit-fallthrough
+    # -Wmissing-prototypes
+    # -Wstrict-prototypes
+    # -Werror
 )
 
 # when `RPATH` is not set, but with the following line

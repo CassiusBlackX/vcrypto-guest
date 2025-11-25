@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME} STATIC
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC
   log_c
+  compiler_warnings
 )
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}

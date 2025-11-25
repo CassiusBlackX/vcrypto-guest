@@ -7,6 +7,7 @@ target_link_libraries(vcrypto_test PRIVATE
   crypto
   pthread
   ${DPDK_LIBRARIES}
+  compiler_warnings
 )
 
 if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)

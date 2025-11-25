@@ -17,6 +17,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   ${DPDK_LIBRARIES}
   klib
   common
+  compiler_warnings
 )
 
 if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
@@ -27,7 +28,7 @@ if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
   message(STATUS "adding dpdk_library_dirs into ${PROJECT_NAME}'s rpath")
 endif()
 
-if(NOT RELEASE_NODE)
+if(NOT RELEASE_MODE)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     log_c_shared
     vcrypto_engine_socket_shared
