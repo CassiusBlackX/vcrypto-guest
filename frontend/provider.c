@@ -99,7 +99,7 @@ static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operatio
     EVP_set_default_properties(NULL, "?provider=vcrypto");
   }
 
-  *no_cache = 0;
+  if(no_cache) *no_cache = 0;
  
  switch (operation_id) {
   case OSSL_OP_CIPHER:

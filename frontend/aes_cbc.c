@@ -1,3 +1,4 @@
+#include <openssl/e_os2.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -341,6 +342,65 @@ int vcrypto_aes_cbc_get_ctx_params(void *vctx, OSSL_PARAM params[]) {
   return 1;
 }
 
+int vcrypto_aes_cbc_set_ctx_params(void *vctx, const OSSL_PARAM params[]) {
+  vcrypto_aes_cbc_ctx *ctx = (vcrypto_aes_cbc_ctx*)vctx;
+  if (params == NULL) return 1;
+  if (ctx->cipher_auth.alg_nid != NID_aes_128_cbc &&
+      ctx->cipher_auth.alg_nid != NID_aes_256_cbc) {
+    return 0;
+  }
+
+  log_debug("we do not allow setting of any param");
+  return 1;
+}
+
+static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_params[] = {
+  OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
+  // FIXME: the following seems to be auth related
+  // which we have yet to implement!
+  OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
+  OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
+  OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
+  OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
+  OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
+  OSSL_PARAM_END
+};
+
+const OSSL_PARAM* vcrypto_aes_cbc_gettable_params(ossl_unused void* provctx) {
+  return vcrypto_aes_cbc_known_gettable_params;
+}
+
+static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_ctx_params[] = {
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
+  OSSL_PARAM_END
+};
+
+const OSSL_PARAM* vcrypto_aes_cbc_gettable_ctx_params(ossl_unused void* provctx) {
+  return vcrypto_aes_cbc_known_gettable_ctx_params;
+}
+
+static const OSSL_PARAM vcrypto_aes_cbc_known_settable_ctx_params[] = {
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
+  OSSL_PARAM_END
+};
+
+const OSSL_PARAM* vcrypto_aes_cbc_settabl_ctx_params(ossl_unused void*ctx, ossl_unused void* provctx) {
+  return vcrypto_aes_cbc_known_settable_ctx_params;
+}
 
 const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[] = {
   {OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))vcrypto_aes_cbc_newctx},
@@ -352,7 +412,7 @@ const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[] = {
   {OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_get_ctx_params},
   {OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_set_ctx_params},
   {OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))vcrypto_aes_cbc_gettable_params},
-  {OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_get_ctx_params},
+  {OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_gettable_ctx_params},
   {OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_settable_ctx_params},
 };
 const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[] = {
