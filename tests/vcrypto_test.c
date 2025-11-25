@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -8,8 +9,22 @@
 
 #include <log.h>
 
+#ifndef PROJECT_BUILD_DIR
+#define PROJECT_BUILD_DIR ".."
+#endif
+
 int main(int argc, char** argv) {
-  setenv("OPENSSL_MODULES", "/home/cassius/vcrypto_guest/build/frontend", 1);
+  char provider_path[256];
+  snprintf(provider_path, sizeof(provider_path), "%s/%s", PROJECT_BUILD_DIR, "./frontend");
+  int ret = setenv("OPENSSL_MODULES", provider_path, 1);
+  assert(ret == 0 && "failed to set env");
+  const char* openssl_modules_val = getenv("OPENSSL_MODULES");
+  if (openssl_modules_val) {
+    log_trace("success set env OPENSSL_MODULES: %s", openssl_modules_val);
+  } else {
+    log_warn("failed to set OPENSSL_MODULES env");
+  }
+
   const unsigned char plaintext[] = "Hello vCrypto Provider";
   size_t plaintext_len = sizeof(plaintext);
 
@@ -28,7 +43,7 @@ int main(int argc, char** argv) {
   assert(ctx && "failed to new EVP_CIPHER_CTX");
   log_trace("EVP_CIPHER_CTX_new success");
 
-  int ret = EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL);
+  ret = EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL);
   assert(ret && "EVP_EncryptInit_ex2 failed");
   log_trace("EVP_EncryptInit_ex2 success");
 
