@@ -62,24 +62,32 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path) {
   if (be_connfd == 0) {
     log_error("failed to get correct be_connfd in fe_engine_init");
     return false;
+  } else {
+    log_trace("success received be_connfd: %d", be_connfd);
   }
   
   sym_crypto_session_pool = rte_mempool_lookup(SYM_CRYPTO_SESS_MP_NAME);
   if (sym_crypto_session_pool == NULL) {
     log_error("failed to lookup sym crypto session pool");
     return false;
+  } else {
+    log_trace("success found sym crypto session pool: %p", sym_crypto_session_pool);
   }
 
   sym_crypto_op_mempool = rte_mempool_lookup(SYM_CRYPTO_OP_MP_NAME);
   if (sym_crypto_op_mempool == NULL) {
     log_error("failed to lookup sym crypto op mempool");
     return false;
+  } else {
+    log_trace("success found sym crypto op mempool: %p", sym_crypto_op_mempool);
   }
 
   pktmbuf_mempool = rte_mempool_lookup(SYM_CRYPTO_MBUF_MP_NAME);
   if (pktmbuf_mempool == NULL) {
     log_error("failed to lookup pktmbuf mempool");
     return false;
+  } else {
+    log_trace("success found pktmbuf mempool: %p", pktmbuf_mempool);
   }
 
   return ret;

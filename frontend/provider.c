@@ -1,6 +1,8 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
 #include <openssl/types.h>
@@ -26,9 +28,23 @@ static OSSL_FUNC_provider_get_capabilities_fn vcrypto_get_capabilities;
 // perform known answer tests on itseld
 static OSSL_FUNC_provider_self_test_fn vcrypto_self_test;
 
+OSSL_PROVIDER *prov = NULL;
+
+OSSL_LIB_CTX* prov_libctx_of(vcrypto_prov_ctx *ctx) {
+  if (ctx == NULL) return NULL;
+  return ctx->libctx;
+}
+
 static void vcrypto_teardown(void *provctx) {
   log_debug("vcrypto provider teardown");
   // TODO: free ciphers
+
+
+  if (provctx) {
+    vcrypto_prov_ctx *vcrypto_ctx = (vcrypto_prov_ctx*)provctx;
+    OPENSSL_free(vcrypto_ctx);
+    OSSL_PROVIDER_unload(prov);
+  }
 }
 
 static const OSSL_PARAM vcrypto_provider_param_types[] = {
@@ -63,7 +79,7 @@ static int vcrypto_get_params(void *provctx, OSSL_PARAM params[]) {
 extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
 extern const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[];
 
-static const OSSL_ALGORITHM_CAPABLE vcrypto_defaul_ciphers[] = {
+static const OSSL_ALGORITHM_CAPABLE vcrypto_default_ciphers[] = {
   ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
   ALG(VCRYPTO_PROVIDER_NAMES_AES_256_CBC, vcrypto_aes_256_cbc_fucntions),
 
@@ -71,29 +87,40 @@ static const OSSL_ALGORITHM_CAPABLE vcrypto_defaul_ciphers[] = {
   {{NULL, NULL, NULL}, NULL},
 };
 
-static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_defaul_ciphers)];
+static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_default_ciphers)];
 
 
-static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operation_id, int *no_store) {
- static void *prov_init = 0;
- prov_init = OSSL_PROVIDER_load(NULL, "default"); 
- if (!prov_init) {
-   log_error("failed to load vcrypto_provider");
-   vcrypto_teardown(provctx);
-   exit(1);
- }
+static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operation_id, int *no_cache) {
+  static bool prov_init = false;
+  prov = OSSL_PROVIDER_load(NULL, "default");
+  if (!prov_init) {
+    prov_init = true;
+    // vcrypto provider takes higher priority than openssl default
+    EVP_set_default_properties(NULL, "?provider=vcrypto");
+  }
 
- *no_store = 0;
+  *no_cache = 0;
  
  switch (operation_id) {
   case OSSL_OP_CIPHER:
+    log_debug("query vcrypto ciphers!");
     return vcrypto_exported_sym_ciphers;
   // case OSSL_OP_ASYM_CIPHER:
   //  return vcrypto_exported_asym_ciphers;
   default:
-    return OSSL_PROVIDER_query_operation(prov_init, operation_id, no_store);
+    return OSSL_PROVIDER_query_operation(prov, operation_id, no_cache);
  }
 }
+
+static int vcrypto_get_capabilities(void* provctx, const char* capability, OSSL_CALLBACK* cb, void *arg) {
+  assert(0 && "unimplement vcrypto get capabilities!");
+  return 0;
+}
+
+// functions provided by the core
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
+static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
+static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
 static const OSSL_DISPATCH vcrypto_dispatch_table[] = {
   {OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))vcrypto_teardown},
@@ -129,5 +156,36 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
     log_error("failed at vcrypto_fe_protocol_engine_init");
     return 0;
   }
+
+  for (; in->function_id != 0; in++) {
+    switch (in->function_id) {
+      case OSSL_FUNC_CORE_GETTABLE_PARAMS:
+        c_gettable_params = OSSL_FUNC_core_gettable_params(in);
+        break;
+      case OSSL_FUNC_CORE_GET_PARAMS:
+        c_get_params = OSSL_FUNC_core_get_params(in);
+        break;
+      case OSSL_FUNC_CORE_GET_LIBCTX:
+        c_get_libctx = OSSL_FUNC_core_get_libctx(in);
+        break;
+      default:
+        // unknown stuffs, ignore
+        break;
+    }
+  }
+
+  vcrypto_prov_ctx* vcrypto_ctx = OPENSSL_zalloc(sizeof(vcrypto_prov_ctx));
+  if (!vcrypto_ctx) {
+    log_error("failed to create vcrypto_prov_ctx");
+    return 0;
+  }
+  vcrypto_ctx->handle = handle;
+  vcrypto_ctx->libctx = (OSSL_LIB_CTX*)OSSL_LIB_CTX_new_from_dispatch(handle, in);
+  *provctx = (void*)vcrypto_ctx;
+
+  *out = vcrypto_dispatch_table;
+  vcrypto_prov_cache_exported_algorithms(vcrypto_default_ciphers, vcrypto_exported_sym_ciphers);
+  
+  log_info("vcrypto provider init success");
   return 1;
 }
