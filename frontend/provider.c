@@ -11,6 +11,7 @@
 #include <rte_mempool.h>
 
 #include <log.h>
+#include <stdio.h>
 
 #include "provider.h"
 #include "protocol.h"

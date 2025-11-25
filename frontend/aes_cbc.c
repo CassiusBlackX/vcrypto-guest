@@ -385,7 +385,7 @@ static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_ctx_params[] = {
   OSSL_PARAM_END
 };
 
-const OSSL_PARAM* vcrypto_aes_cbc_gettable_ctx_params(ossl_unused void* provctx) {
+const OSSL_PARAM* vcrypto_aes_cbc_gettable_ctx_params(ossl_unused void* provctx, ossl_unused void*ctx) {
   return vcrypto_aes_cbc_known_gettable_ctx_params;
 }
 
@@ -398,7 +398,7 @@ static const OSSL_PARAM vcrypto_aes_cbc_known_settable_ctx_params[] = {
   OSSL_PARAM_END
 };
 
-const OSSL_PARAM* vcrypto_aes_cbc_settabl_ctx_params(ossl_unused void*ctx, ossl_unused void* provctx) {
+const OSSL_PARAM* vcrypto_aes_cbc_settable_ctx_params(ossl_unused void*ctx, ossl_unused void* provctx) {
   return vcrypto_aes_cbc_known_settable_ctx_params;
 }
 
@@ -413,7 +413,7 @@ const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[] = {
   {OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_set_ctx_params},
   {OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))vcrypto_aes_cbc_gettable_params},
   {OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_gettable_ctx_params},
-  {OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_settable_ctx_params},
+  {OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_settable_ctx_params},
 };
 const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[] = {
   {OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))vcrypto_aes_cbc_newctx},
@@ -426,5 +426,5 @@ const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[] = {
   {OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_set_ctx_params},
   {OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))vcrypto_aes_cbc_gettable_params},
   {OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_get_ctx_params},
-  {OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_settable_ctx_params},
+  {OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))vcrypto_aes_cbc_settable_ctx_params},
 };
