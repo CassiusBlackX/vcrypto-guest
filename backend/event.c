@@ -35,7 +35,7 @@ bool init_server(const char *socket_path, int *out_listen_fd,
 
   // delete old socket file
   unlink(socket_path);
-   
+
   // create listen fd
   listen_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (listen_fd < 0) {
@@ -179,7 +179,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
   struct epoll_event events[MAX_NUM_BE_FDS];
   bool client_fds[MAX_NUM_BE_FDS] = {0};
   // in case the expr above did not set client_fds to all 0
-  memset(client_fds, 0, sizeof(client_fds)/sizeof(client_fds[0]));
+  memset(client_fds, 0, sizeof(client_fds) / sizeof(client_fds[0]));
   log_trace("going into mainloop");
 
   while (running) {
@@ -195,7 +195,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
         }
         client_fds[client_fd] = true;
         if (vcrypto_be_protocol_engine_init(client_fd)) {
-          log_trace("connection handshook with client_fd: %d", client_fd);
+          log_info("connection handshook with client_fd: %d", client_fd);
         }
       } else if (events[i].events == EPOLLIN) {
         // frontend msg
@@ -220,10 +220,12 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
            rte_ring_dequeue(cr->rx_ring, (void *)&op) == 0) {
       if (op) {
         cr->ops[cr->num_valid_ops++] = op;
-        log_trace("dequeue [%d] op: %p from cr_rx_ring", cr->num_valid_ops, op);
       } else {
         log_debug("dequeue out a NULL ptr");
       }
+    }
+    if (cr->num_valid_ops > 0) {
+      log_trace("dequeued [%d] ops", cr->num_valid_ops);
     }
     // enqueue into cryptodev
     if (cr->num_valid_ops > 0) {
@@ -244,7 +246,9 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
     struct rte_crypto_op *ops[MAX_NUM_OPS_PER_BURST] = {0};
     int num_ops_dequeued =
         rte_cryptodev_dequeue_burst(cr->cdev_id, 0, ops, MAX_NUM_OPS_PER_BURST);
-    log_trace("dequeued %d ops from cryptodev", num_ops_dequeued);
+    if (num_ops_dequeued > 0) {
+      log_trace("dequeued %d ops from cryptodev", num_ops_dequeued);
+    }
     for (int i = 0; i < num_ops_dequeued; i++) {
       op = ops[i];
       if (op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
@@ -261,7 +265,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
   }
 
   log_info("vcrypto_be_mainloop is closing, doing resource cleaning...");
-  for (int i = 0; i <MAX_NUM_BE_FDS; i++) {
+  for (int i = 0; i < MAX_NUM_BE_FDS; i++) {
     if (client_fds[i]) {
       log_trace("closing client: %d", i);
       close(i);
@@ -269,6 +273,6 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
     }
   }
   log_info("all connections in vcrypto_be_mainloop is release");
-  
+
   return 0;
 }

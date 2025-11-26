@@ -78,7 +78,7 @@ sess_resource* get_sess_resource(const cipher_auth_ctrl* cipher_auth) {
   uint64_t hash_val = cipher_auth->alg_elems_md5;
   sess_resource* sr = hash_map_get(hash_val);
   if (sr) {
-    log_trace("session exists!");
+    log_debug("session exists!");
   } else {
     sr = malloc(sizeof(sess_resource));
     sr->sess = create_rte_crypto_sym_sess(cipher_auth);

@@ -97,9 +97,9 @@ bool vcrypto_fe_protocol_create_sess(vcrypto_aes_cbc_ctx *ctx) {
   enum msg_type_cmd cmd = MSG_TYPE_CREATE_SESS;
   bool ret = true;
   ret &= vcrypto_send(fe_connfd, &cmd, sizeof(cmd));
-  ret &= vcrypto_send(fe_connfd, &(ctx->cipher_auth), sizeof(vcrypto_aes_cbc_ctx));
+  ret &= vcrypto_send(fe_connfd, &(ctx->cipher_auth), sizeof(ctx->cipher_auth));
  // DEBUG: compiler thinks it is not safe to pass a pointer through UDS
-  vcrypto_recv(fe_connfd, &(ctx->sess), sizeof(void*)); 
+  ret &= vcrypto_recv(fe_connfd, &(ctx->sess), sizeof(void*)); 
   if (ctx->sess == NULL) {
     log_error("failed to receive ctx->sess from backend");
     return false;

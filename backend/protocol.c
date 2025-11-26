@@ -37,7 +37,13 @@ bool vcrypto_be_protocol_create_sess(int client_fd) {
   bool ret = true;
   ret &= vcrypto_recv(client_fd, &cipher_auth, sizeof(cipher_auth));
   sess_resource *sr =  get_sess_resource(&cipher_auth); 
+  if (!sr) {
+    log_error("failed to create session");
+  }
   ret &= vcrypto_send(client_fd, sr->sess, sizeof(sr->sess));
+  if (ret) {
+    log_trace("success created session and sent to frontend");
+  }
   return ret;
 }
 
