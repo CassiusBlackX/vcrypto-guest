@@ -1,4 +1,3 @@
-#include <openssl/e_os2.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -26,7 +25,8 @@
 #include "aes_cbc.h"
 #include "protocol.h"
 
-#define AEAD_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAGS_CUSTOM_IV)
+// #define AEAD_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAGS_CUSTOM_IV)
+#define AEAD_FLAGS 0
 
 void *vcrypto_aes_cbc_newctx(void *provctx) {
   vcrypto_aes_cbc_ctx *ctx = OPENSSL_zalloc(sizeof((*ctx)));
@@ -112,6 +112,7 @@ int vcrypto_aes_cbc_dinit(void *cctx, const unsigned char* key, size_t keylen,
 
 int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl, size_t outsize,
                            const unsigned char *in, size_t inl) {
+  log_trace("entering vcrypto_aes_cbc_cipher");
   vcrypto_aes_cbc_ctx *ctx = (vcrypto_aes_cbc_ctx*)cctx;
   // 1. status check
   if (!ctx || !out || !in || !outl) {
@@ -268,47 +269,48 @@ static int vcrypto_aes_cbc_generic_get_params(OSSL_PARAM params[], unsigned int 
     log_error("failed to set aes-%d-cbc md", kbits);
     return 0;
   }
-  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
-  if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
-    log_error("failed to set aes-%d-cbc aead", kbits);
-    return 0;
-  }
-  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
-  if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_CUSTOM_IV) != 0)) {
-    log_error("failed to set aes-%d-cbc custom iv", kbits);
-    return 0;
-  }
-  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS);
-  if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_CTS) != 0)) {
-    log_error("failed to set aes-%d-cbc cts", kbits);
-    return 0;
-  }
-  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
-  if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_TLS1_MULTIBLOCK) != 0)){
-    log_error("failed to set aes-%d-cbc tls1_multiblock", kbits);
-    return 0;
-  }
-  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_HAS_RAND_KEY);
-  if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
-    log_error("failed to set aes-%d-cbc has_rand_key", kbits);
-    return 0;
-  }
+  // we do not support aead
+  // p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
+  // if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
+  //   log_error("failed to set aes-%d-cbc aead", kbits);
+  //   return 0;
+  // }
+  // p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
+  // if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_CUSTOM_IV) != 0)) {
+  //   log_error("failed to set aes-%d-cbc custom iv", kbits);
+  //   return 0;
+  // }
+  // p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS);
+  // if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_CTS) != 0)) {
+  //   log_error("failed to set aes-%d-cbc cts", kbits);
+  //   return 0;
+  // }
+  // p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
+  // if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAGS_TLS1_MULTIBLOCK) != 0)){
+  //   log_error("failed to set aes-%d-cbc tls1_multiblock", kbits);
+  //   return 0;
+  // }
+  // p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_HAS_RAND_KEY);
+  // if (p != NULL && OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
+  //   log_error("failed to set aes-%d-cbc has_rand_key", kbits);
+  //   return 0;
+  // }
   p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-  if (p != NULL && OSSL_PARAM_set_size_t(p, kbits / 8)) {
+  if (p != NULL && !OSSL_PARAM_set_size_t(p, kbits / 8)) {
     log_error("failed to set aes-%d-cbc keylen", kbits);
     return 0;
   }
   p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
-  if (p != NULL && OSSL_PARAM_set_size_t(p, blkbits / 8)) {
+  if (p != NULL && !OSSL_PARAM_set_size_t(p, blkbits / 8)) {
     log_error("failed to set aes-%d-cbc block size", kbits);
     return 0;
   }
   p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-  if (p != NULL && OSSL_PARAM_set_size_t(p, ivbits / 8)) {
+  if (p != NULL && !OSSL_PARAM_set_size_t(p, ivbits / 8)) {
     log_error("failed to set aes-%d-cbc iv len", kbits);
     return 0;
   }
-  log_debug("aes-%d-cbc param set success", kbits);
+  log_debug("aes-%d-cbc generic param get success", kbits);
   return 1;
 }
 
@@ -329,16 +331,34 @@ int vcrypto_aes_cbc_get_ctx_params(void *vctx, OSSL_PARAM params[]) {
 
   OSSL_PARAM *p;
   p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-  if (p != NULL && OSSL_PARAM_set_size_t(p, ctx->cipher_auth.cipher_iv_len)) {
+  if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->cipher_auth.cipher_iv_len)) {
     log_error("failed to set cipher iv len");
     return 0;
   }
-  p = OSSL_PARAM_locate(p, OSSL_CIPHER_PARAM_KEYLEN);
-  if (p != NULL && OSSL_PARAM_set_size_t(p, ctx->cipher_auth.cipher_key_len)) {
+  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+  if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->cipher_auth.cipher_key_len)) {
     log_error("failed to set cipher key len");
     return 0;
   }
+  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+  if (p != NULL) {
+    if (ctx->cipher_auth.cipher_iv_len > p->data_size) {
+      log_error("INVALID IV LEN: ctx->cipher_auth.cipher_iv-len > OSSL_CIPHER_PARAM_IV length!");
+      return 0;
+    }
+    if (!OSSL_PARAM_set_octet_string(p, ctx->cipher_auth.cipher_iv_data, p->data_size)
+        && !OSSL_PARAM_set_octet_ptr(p, &(ctx->cipher_auth.cipher_iv_data), p->data_size)) {
+      log_error("failed to set cipher iv data");
+    }
+  }
+  p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+  if (p != NULL) {
+    log_debug("tring to set updated IV!, which we yet to implement!");
+    return 0;
+  }
+  
   // TODO: other parameters???
+  log_debug("aes_cbc get_ctx_params success");
   return 1;
 }
 
@@ -350,7 +370,7 @@ int vcrypto_aes_cbc_set_ctx_params(void *vctx, const OSSL_PARAM params[]) {
     return 0;
   }
 
-  log_debug("we do not allow setting of any param");
+  log_debug("we do not allow setting of any ctx param");
   return 1;
 }
 
@@ -361,11 +381,11 @@ static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_params[] = {
   OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
   // FIXME: the following seems to be auth related
   // which we have yet to implement!
-  OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
-  OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
-  OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
-  OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
-  OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
+  // OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
+  // OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
+  // OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
+  // OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
+  // OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
   OSSL_PARAM_END
 };
 
@@ -376,12 +396,12 @@ const OSSL_PARAM* vcrypto_aes_cbc_gettable_params(ossl_unused void* provctx) {
 static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_ctx_params[] = {
   OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
   OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
   OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
   OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
+  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
   OSSL_PARAM_END
 };
 
@@ -390,11 +410,11 @@ const OSSL_PARAM* vcrypto_aes_cbc_gettable_ctx_params(ossl_unused void* provctx,
 }
 
 static const OSSL_PARAM vcrypto_aes_cbc_known_settable_ctx_params[] = {
-  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, NULL, 0),
-  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
+  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, NULL, 0),
+  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
   OSSL_PARAM_END
 };
 
