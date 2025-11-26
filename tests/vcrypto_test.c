@@ -14,6 +14,7 @@
 #endif
 
 int main(int argc, char** argv) {
+  log_set_level(LOG_TRACE);
   char provider_path[256];
   snprintf(provider_path, sizeof(provider_path), "%s/%s", PROJECT_BUILD_DIR, "./frontend");
   int ret = setenv("OPENSSL_MODULES", provider_path, 1);
@@ -36,6 +37,7 @@ int main(int argc, char** argv) {
   log_trace("successfully loaded vcrypto provider for openssl");
 
   EVP_CIPHER* cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC", "provider=vcrypto");
+  log_trace("EVP_CIPHER_fetch returned");
   assert(cipher && "failed to fetch aes-256-cbc cipher using vcrypto provider");
   log_trace("successfully fetched aes-256-cbc cipher using vcrypto provider");
 
