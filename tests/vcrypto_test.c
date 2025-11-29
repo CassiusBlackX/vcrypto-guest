@@ -6,6 +6,7 @@
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/types.h>
+#include <openssl/err.h>
 
 #include <log.h>
 
@@ -17,14 +18,15 @@ int main(int argc, char** argv) {
   log_set_level(LOG_TRACE);
   char provider_path[256];
   snprintf(provider_path, sizeof(provider_path), "%s/%s", PROJECT_BUILD_DIR, "./frontend");
-  int ret = setenv("OPENSSL_MODULES", provider_path, 1);
-  assert(ret == 0 && "failed to set env");
-  const char* openssl_modules_val = getenv("OPENSSL_MODULES");
-  if (openssl_modules_val) {
-    log_trace("success set env OPENSSL_MODULES: %s", openssl_modules_val);
-  } else {
-    log_warn("failed to set OPENSSL_MODULES env");
-  }
+  int ret;
+  // int ret = setenv("OPENSSL_MODULES", provider_path, 1);
+  // assert(ret == 0 && "failed to set env");
+  // const char* openssl_modules_val = getenv("OPENSSL_MODULES");
+  // if (openssl_modules_val) {
+  //   log_trace("success set env OPENSSL_MODULES: %s", openssl_modules_val);
+  // } else {
+  //   log_warn("failed to set OPENSSL_MODULES env");
+  // }
 
   const unsigned char plaintext[] = "Hello vCrypto Provider";
   size_t plaintext_len = sizeof(plaintext);
@@ -38,6 +40,14 @@ int main(int argc, char** argv) {
 
   EVP_CIPHER* cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC", "provider=vcrypto");
   log_trace("EVP_CIPHER_fetch returned");
+  if (!cipher) {
+    unsigned long err = 0;
+    while ((err = ERR_get_error()) != 0) {
+      char buf[256];
+      ERR_error_string_n(err, buf, sizeof(buf));
+      log_error("openssl error: %s", buf);
+    }
+  }
   assert(cipher && "failed to fetch aes-256-cbc cipher using vcrypto provider");
   log_trace("successfully fetched aes-256-cbc cipher using vcrypto provider");
 
