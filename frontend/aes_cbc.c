@@ -325,9 +325,11 @@ static int vcrypto_aes_cbc_generic_get_params(OSSL_PARAM params[], unsigned int 
 }
 
 int vcrypto_aes_128_cbc_get_params(OSSL_PARAM params[]) {
+  log_trace("enter aes-128-cbc get_params");
   return vcrypto_aes_cbc_generic_get_params(params, EVP_CIPH_CBC_MODE, AEAD_FLAGS, 128, 128, 128);
 }
 int vcrypto_aes_256_cbc_get_params(OSSL_PARAM params[]) {
+  log_trace("enter aes-256-cbc get_params");
   return vcrypto_aes_cbc_generic_get_params(params, EVP_CIPH_CBC_MODE, AEAD_FLAGS, 256, 128, 128);
 }
 
@@ -410,14 +412,17 @@ const OSSL_PARAM* vcrypto_aes_cbc_gettable_params(ossl_unused void* provctx) {
 }
 
 static const OSSL_PARAM vcrypto_aes_cbc_known_gettable_ctx_params[] = {
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
   OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
   OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
   OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE, NULL),
+  OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
+  OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN, NULL),
+#endif  // !defined(OPENSSL_NO_MULTIBLOCK)
   OSSL_PARAM_END
 };
 
@@ -427,11 +432,16 @@ const OSSL_PARAM* vcrypto_aes_cbc_gettable_ctx_params(ossl_unused void* provctx,
 }
 
 static const OSSL_PARAM vcrypto_aes_cbc_known_settable_ctx_params[] = {
-  // OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, NULL, 0),
-  // OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT, NULL),
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, NULL),
+  OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, NULL, 0),
+  OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, NULL, 0),
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
+  OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
   OSSL_PARAM_END
 };
 
