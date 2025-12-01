@@ -57,6 +57,15 @@ set_target_properties(vcrypto PROPERTIES
   PREFIX ""
 )
 
+# for debug, soft link to local openssl ossl-modules dir
+add_custom_command(TARGET vcrypto
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E create_symlink
+    $<TARGET_FILE:vcrypto>
+    ${OPENSSL_LIB_DIR}/ossl-modules/vcrypto.so
+  COMMENT "Creating symlink in ossl-moidules for vcrypto"
+)
+
 install(
   TARGETS vcrypto
   LIBRARY DESTINATION ${OPENSSL_ENGINE_DIR}

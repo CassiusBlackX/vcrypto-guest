@@ -99,7 +99,7 @@ if(NOT EXISTS ${OPENSSL_STAMP})
   add_custom_command(
     OUTPUT ${OPENSSL_STAMP}
     COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR}
-            ./Configure no-shared --prefix=${OPENSSL_BINARY_DIR}
+            ./Configure no-shared --prefix=${OPENSSL_BINARY_DIR} --debug
     COMMAND ${CMAKE_COMMAND} -E touch ${OPENSSL_STAMP}
     COMMENT "Configuring OpenSSL (first-time build)"
     VERBATIM
@@ -108,6 +108,7 @@ endif()
 add_custom_target(build_openssl ALL
   COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR} make -j$(nproc)
   COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR} make install_sw
+  DEPENDS ${OPENSSL_STAMP}
   COMMENT "Building OpenSSL before building vcrypto series"
 )
 message(STATUS "Built local OpenSSL")
