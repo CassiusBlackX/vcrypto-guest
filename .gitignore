@@ -2,3 +2,4 @@
 .vs/
 .cache/
 build/
+third_party/openssl

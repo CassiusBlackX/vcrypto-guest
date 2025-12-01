@@ -11,7 +11,6 @@ target_sources(vcrypto PRIVATE
 )
 
 target_link_libraries(vcrypto PRIVATE
-  crypto
   pthread
   ${DPDK_LIBRARIES}
   klib
@@ -32,12 +31,18 @@ if(NOT RELEASE_MODE)
     log_c_shared
     vcrypto_engine_socket_shared
     xxHash_shared
+    ${OPENSSL_LIB_DIR}/libcrypto.a # local openssl crypto lib
+  )
+  add_dependencies(vcrypto build_openssl)
+  target_include_directories(vcrypto PRIVATE
+    ${OPENSSL_INCLUDE_DIR}
   )
 else()
   target_link_libraries(vcrypto PRIVATE
     log_c
     vcrypto_engine_socket
     xxHash
+    crypto # system default openssl crypto library
   )
 endif()
 

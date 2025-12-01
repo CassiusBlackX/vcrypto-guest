@@ -1,20 +1,24 @@
 cmake_minimum_required(VERSION 3.20)
 project(vcrypto_test LANGUAGES C)
 
-add_executable(vcrypto_test vcrypto_test.c)
-target_link_libraries(vcrypto_test PRIVATE
+add_executable(${PROJECT_NAME} vcrypto_test.c)
+target_link_libraries(${PROJECT_NAME} PRIVATE
   log_c
-  crypto
   pthread
   ${DPDK_LIBRARIES}
   compiler_warnings
+  ${OPENSSL_LIB_DIR}/libcrypto.a # local openssl crypto lib
 )
-target_compile_definitions(vcrypto_test PRIVATE
+add_dependencies(${PROJECT_NAME} build_openssl)
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${OPENSSL_INCLUDE_DIR}
+)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
   "PROJECT_BUILD_DIR=\"${CMAKE_BINARY_DIR}\""
 )
 
 if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
-  set_target_properties(vcrypto_test PROPERTIES
+  set_target_properties(${PROJECT_NAME} PROPERTIES
     BUILD_RPATH ${DPDK_LIBRARY_DIRS}
     INSTALL_RPATH ${DPDK_LIBRARY_DIRS}
   )

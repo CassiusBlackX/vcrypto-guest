@@ -19,14 +19,6 @@ int main(int argc, char** argv) {
   char provider_path[256];
   snprintf(provider_path, sizeof(provider_path), "%s/%s", PROJECT_BUILD_DIR, "./frontend");
   int ret;
-  // int ret = setenv("OPENSSL_MODULES", provider_path, 1);
-  // assert(ret == 0 && "failed to set env");
-  // const char* openssl_modules_val = getenv("OPENSSL_MODULES");
-  // if (openssl_modules_val) {
-  //   log_trace("success set env OPENSSL_MODULES: %s", openssl_modules_val);
-  // } else {
-  //   log_warn("failed to set OPENSSL_MODULES env");
-  // }
 
   const unsigned char plaintext[] = "Hello vCrypto Provider";
   size_t plaintext_len = sizeof(plaintext);
