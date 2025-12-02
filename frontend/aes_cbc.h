@@ -7,12 +7,6 @@
 #define CIPHER_DIRECTION_ENCRYPT 0
 #define CIPHER_DIRECTION_DECRYPT 1
 
-#define PROV_CIPHER_FLAG_AEAD             0X0001
-#define PROV_CIPHER_FLAGS_CUSTOM_IV       0x0002
-#define PROV_CIPHER_FLAGS_CTS             0X0004
-#define PROV_CIPHER_FLAGS_TLS1_MULTIBLOCK 0x0008
-#define PROV_CIPHER_FLAG_RAND_KEY         0x0010
-
 #define VCRYPTO_AES_CBC_CTX_BUF_SIZE 4096
 
 typedef struct cipher_auth_t {
@@ -52,14 +46,5 @@ OSSL_FUNC_cipher_decrypt_init_fn vcrypto_aes_cbc_dinit;
 // return 1 for success and 0 for error
 OSSL_FUNC_cipher_cipher_fn vcrypto_aes_cbc_cipher;
 OSSL_FUNC_cipher_freectx_fn vcrypto_aes_cbc_freectx;
-
-OSSL_FUNC_cipher_get_params_fn vcrypto_aes_128_cbc_get_params;
-OSSL_FUNC_cipher_get_params_fn vcrypto_aes_256_cbc_get_params;
-OSSL_FUNC_cipher_get_ctx_params_fn vcrypto_aes_cbc_get_ctx_params;
-OSSL_FUNC_cipher_set_ctx_params_fn vcrypto_aes_cbc_set_ctx_params;
-OSSL_FUNC_cipher_gettable_params_fn vcrypto_aes_cbc_gettable_params;
-OSSL_FUNC_cipher_gettable_ctx_params_fn vcrypto_aes_cbc_gettable_ctx_params;
-OSSL_FUNC_cipher_settable_ctx_params_fn vcrypto_aes_cbc_settable_ctx_params;
-
 
 #endif  // VCRYPTO_GUEST_FE_AES_CBC_H
