@@ -77,11 +77,11 @@ static int vcrypto_get_params(void *provctx, OSSL_PARAM params[]) {
   return 1;
 }
 
-extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
+// extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
 extern const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[];
 
 static const OSSL_ALGORITHM_CAPABLE vcrypto_default_ciphers[] = {
-  ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
+  // ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
   ALG(VCRYPTO_PROVIDER_NAMES_AES_256_CBC, vcrypto_aes_256_cbc_fucntions),
 
   // the following line must be kept to indicate the end of array
@@ -92,13 +92,13 @@ static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_default_ci
 
 
 static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operation_id, int *no_cache) {
-  static bool prov_init = false;
-  prov = OSSL_PROVIDER_load(NULL, "default");
-  if (!prov_init) {
-    prov_init = true;
-    // vcrypto provider takes higher priority than openssl default
-    EVP_set_default_properties(NULL, "?provider=vcrypto");
-  }
+  // static bool prov_init = false;
+  // prov = OSSL_PROVIDER_load(NULL, "default");
+  // if (!prov_init) {
+  //   prov_init = true;
+  //   // vcrypto provider takes higher priority than openssl default
+  //   EVP_set_default_properties(NULL, "?provider=vcrypto");
+  // }
 
   if(no_cache) *no_cache = 0;
  
