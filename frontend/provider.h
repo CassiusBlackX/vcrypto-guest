@@ -20,7 +20,7 @@ typedef struct vcrypto_provider_ctx_st {
 
 # define ALGC(NAMES, FUNC, CHECK) { { NAMES, VCRYPTO_DEFAULT_PROPERTIES, FUNC }, CHECK }
 # define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
-static const char VCRYPTO_DEFAULT_PROPERTIES[] = "provider=vcrypto_provider";
+static const char VCRYPTO_DEFAULT_PROPERTIES[] = "provider=vcrypto";
 typedef struct vcrypto_alg_capable_st {
   OSSL_ALGORITHM alg;
   int (*capable)(void);
