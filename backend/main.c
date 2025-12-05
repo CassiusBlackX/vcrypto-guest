@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
   log_info("vcrypto_daemon starting...");
   
   signal(SIGINT, SIGINT_handler);
+  signal(SIGTERM, SIGINT_handler);
 
   int ret = rte_eal_init(argc, argv);
   assert(rte_eal_process_type() == RTE_PROC_PRIMARY && "vcrypto daemon process has to be a dpdk primary process\n");
