@@ -12,6 +12,8 @@
 
 #include <rte_crypto.h>
 #include <rte_cryptodev.h>
+#include <rte_mbuf.h>
+#include <rte_mbuf_core.h>
 
 #include <log.h>
 #include <socket.h>
@@ -19,6 +21,7 @@
 #include "cdev.h"
 #include "event.h"
 #include "protocol.h"
+#include "hashmap.h"
 
 volatile sig_atomic_t running = 1;
 
@@ -80,6 +83,9 @@ bool init_server(const char *socket_path, int *out_listen_fd,
 
   *out_listen_fd = listen_fd;
   *out_epoll_fd = epoll_fd;
+
+  // create hashmap
+  hash_map_create();
   return true;
 
 cleanup:
@@ -141,6 +147,7 @@ static bool handle_fe_msg(int client_fd) {
   }
   switch (cmd) {
   case MSG_TYPE_CREATE_SESS:
+    log_trace("received cmd: MSG_TYPE_CREATE_SESS");
     return vcrypto_be_protocol_create_sess(client_fd);
   case MSG_TYPE_REMOVE_SESS:
     return vcrypto_be_protocol_remove_sess(client_fd);
@@ -184,7 +191,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
 
   while (running) {
     // ctrontol plane
-    int nfds = epoll_wait(epoll_fd, events, MAX_NUM_BE_FDS, -1);
+    int nfds = epoll_wait(epoll_fd, events, MAX_NUM_BE_FDS, 0);
     for (int i = 0; i < nfds; i++) {
       if (events[i].data.fd == listen_fd) {
         // new connect
@@ -220,12 +227,13 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
            rte_ring_dequeue(cr->rx_ring, (void *)&op) == 0) {
       if (op) {
         cr->ops[cr->num_valid_ops++] = op;
+        log_trace("got op: %p", op);
       } else {
         log_debug("dequeue out a NULL ptr");
       }
     }
     if (cr->num_valid_ops > 0) {
-      log_trace("dequeued [%d] ops", cr->num_valid_ops);
+      log_debug("dequeued [%d] ops", cr->num_valid_ops);
     }
     // enqueue into cryptodev
     if (cr->num_valid_ops > 0) {
@@ -256,6 +264,10 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
                   rte_crypto_op_err_msg(op));
         continue;
       }
+      // if (!op->sym->m_dst) {
+      //   log_error("dequeued op->sym->m_dst is NULL");
+      //   continue;
+      // }
 
       // enqueue into tx_ring
       if (rte_ring_enqueue(cr->tx_ring, op) == 0) {
