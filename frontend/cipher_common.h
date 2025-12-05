@@ -6,27 +6,34 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/modes.h>
+#include <stdint.h>
 
-# define MAXCHUNK    ((size_t)1 << 30)
-# define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
+#define MAXCHUNK    ((size_t)1 << 30)
+#define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
-# define GENERIC_BLOCK_SIZE 16
-# define IV_STATE_UNINITIALISED 0  /* initial state is not initialized */
-# define IV_STATE_BUFFERED      1  /* iv has been copied to the iv buffer */
-# define IV_STATE_COPIED        2  /* iv has been copied from the iv buffer */
-# define IV_STATE_FINISHED      3  /* the iv has been used - so don't reuse it */
+#define GENERIC_BLOCK_SIZE 16
+#define IV_STATE_UNINITIALISED 0  /* initial state is not initialized */
+#define IV_STATE_BUFFERED      1  /* iv has been copied to the iv buffer */
+#define IV_STATE_COPIED        2  /* iv has been copied from the iv buffer */
+#define IV_STATE_FINISHED      3  /* the iv has been used - so don't reuse it */
 
 /* Internal flags that can be queried */
-# define PROV_CIPHER_FLAG_AEAD             0x0001
-# define PROV_CIPHER_FLAG_CUSTOM_IV        0x0002
-# define PROV_CIPHER_FLAG_CTS              0x0004
-# define PROV_CIPHER_FLAG_TLS1_MULTIBLOCK  0x0008
-# define PROV_CIPHER_FLAG_RAND_KEY         0x0010
+#define PROV_CIPHER_FLAG_AEAD             0x0001
+#define PROV_CIPHER_FLAG_CUSTOM_IV        0x0002
+#define PROV_CIPHER_FLAG_CTS              0x0004
+#define PROV_CIPHER_FLAG_TLS1_MULTIBLOCK  0x0008
+#define PROV_CIPHER_FLAG_RAND_KEY         0x0010
 /* Internal flags that are only used within the provider */
-# define PROV_CIPHER_FLAG_VARIABLE_LENGTH  0x0100
-# define PROV_CIPHER_FLAG_INVERSE_CIPHER   0x0200
+#define PROV_CIPHER_FLAG_VARIABLE_LENGTH  0x0100
+#define PROV_CIPHER_FLAG_INVERSE_CIPHER   0x0200
+
+#define CIPHER_DIRECTION_ENCRYPT 0
+#define CIPHER_DIRECTION_DECRYPT 1
 
 typedef struct prov_cipher_ctx_st {
+    // vcrypto specific, md5 of each prov_cipher_ctx
+    uint64_t md5_val;
+
     /* place buffer at the beginning for memory alignment */
     /* The original value of the iv */
     unsigned char oiv[GENERIC_BLOCK_SIZE];
@@ -79,21 +86,21 @@ typedef struct prov_cipher_ctx_st {
     OSSL_LIB_CTX *libctx;
 } PROV_CIPHER_CTX;
 
-void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
-OSSL_FUNC_cipher_encrypt_init_fn ossl_cipher_generic_einit;
-OSSL_FUNC_cipher_decrypt_init_fn ossl_cipher_generic_dinit;
+void vcrypto_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
+OSSL_FUNC_cipher_encrypt_init_fn vcrypto_cipher_generic_einit;
+OSSL_FUNC_cipher_decrypt_init_fn vcrypto_cipher_generic_dinit;
 // OSSL_FUNC_cipher_update_fn ossl_cipher_generic_block_update;
 // OSSL_FUNC_cipher_final_fn ossl_cipher_generic_block_final;
 // OSSL_FUNC_cipher_update_fn ossl_cipher_generic_stream_update;
 // OSSL_FUNC_cipher_final_fn ossl_cipher_generic_stream_final;
 // OSSL_FUNC_cipher_cipher_fn ossl_cipher_generic_cipher;
-OSSL_FUNC_cipher_get_ctx_params_fn ossl_cipher_generic_get_ctx_params;
-OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_generic_set_ctx_params;
-OSSL_FUNC_cipher_gettable_params_fn     ossl_cipher_generic_gettable_params;
-OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_generic_gettable_ctx_params;
-OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_generic_settable_ctx_params;
+OSSL_FUNC_cipher_get_ctx_params_fn vcrypto_cipher_generic_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn vcrypto_cipher_generic_set_ctx_params;
+OSSL_FUNC_cipher_gettable_params_fn     vcrypto_cipher_generic_gettable_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn vcrypto_cipher_generic_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn vcrypto_cipher_generic_settable_ctx_params;
 
-int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
+int vcrypto_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    uint64_t flags,
                                    size_t kbits, size_t blkbits, size_t ivbits);
 
@@ -121,8 +128,14 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 // int ossl_cipher_common_set_ctx_params
 //     (PROV_CIPHER_CTX *ctx, const struct ossl_cipher_set_ctx_param_list_st *p);
 
-int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+int vcrypto_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
                                size_t ivlen);
+
+// vcrypto version of generic_initkey
+// no PROV_CIPHER_HW in params
+void vcrypto_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
+                                 size_t ivbits, unsigned int mode,
+                                 uint64_t flags, void *provctx);
 
 // size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
 //                              size_t blocksize,

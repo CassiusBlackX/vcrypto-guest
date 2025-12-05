@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <rte_crypto.h>
 #include <rte_crypto_sym.h>
 #include <stdbool.h>
 
@@ -28,30 +29,42 @@ static inline bool vcrypto_is_chained_cipher(int nid) {
   }
 }
 
-static struct rte_crypto_sym_session* create_rte_crypto_sym_sess(const cipher_auth_ctrl* cipher_auth) {
+static struct rte_crypto_sym_session* create_rte_crypto_sym_sess(const PROV_CIPHER_CTX* cipher_auth) {
+  log_debug("enter create_rte_crypto_sym_sess");
   enum rte_crypto_cipher_algorithm alg_id = RTE_CRYPTO_CIPHER_NULL;
-  switch (cipher_auth->alg_nid) {
-    case NID_aes_128_cbc:
-    case NID_aes_256_cbc:
-      alg_id = RTE_CRYPTO_CIPHER_AES_CBC;
-      break;
-    default:
-      log_error("alg_nid: %d is not supported", cipher_auth->alg_nid);
-      return NULL;
-  }
+  // switch (cipher_auth->alg_nid) {
+  //   case NID_aes_128_cbc:
+  //   case NID_aes_256_cbc:
+  //     alg_id = RTE_CRYPTO_CIPHER_AES_CBC;
+  //     break;
+  //   default:
+  //     log_error("alg_nid: %d is not supported", cipher_auth->alg_nid);
+  //     return NULL;
+  // }
+  // BUG: default using aes_cbc alg!
+  alg_id = RTE_CRYPTO_CIPHER_AES_CBC;
   enum rte_crypto_cipher_operation cipher_direction =
-     (cipher_auth->direction == CIPHER_DIRECTION_ENCRYPT)?
+     (cipher_auth->enc)?
      RTE_CRYPTO_CIPHER_OP_ENCRYPT : RTE_CRYPTO_CIPHER_OP_DECRYPT;
 
   struct rte_crypto_cipher_xform cipher = {
     .algo = alg_id,
     .op = cipher_direction, 
-    .key.length = cipher_auth->cipher_key_len,
-    .iv.length = cipher_auth->cipher_iv_len,
-    .iv.offset = 0,  // BUG: what should iv.offset be?
+    .key.length = cipher_auth->keylen,
+    .iv.length = cipher_auth->ivlen,
+    .iv.offset = sizeof(struct rte_crypto_op) + sizeof(struct rte_crypto_sym_op),
   };
-  cipher.key.data = rte_malloc("cipher.key.data", cipher_auth->cipher_key_len, 64);
-  memcpy((uint8_t*)cipher.key.data, cipher_auth->cipher_key_data, cipher_auth->cipher_key_len);
+  log_debug("going to rte_malloc for cipher.key.data");
+  cipher.key.data = rte_malloc("cipher.key.data", cipher_auth->keylen, 64);
+  if (cipher.key.data && cipher_auth->ks) {
+    log_debug("going to copy cipher_auth's key data to cipher.key.data");
+    // BUG: we should copy key into here
+    // but so far we just set them to 0 -> key is set to 0
+    // memcpy((uint8_t*)cipher.key.data, cipher_auth->ks, cipher_auth->keylen);
+    memset((uint8_t*)cipher.key.data, 0,cipher_auth->keylen);
+  } else {
+    log_error("failed to malloc for cipher.key.data, or cipher_auth->ks is null");
+  }
 
   struct rte_crypto_sym_xform sym_xform = {
     .next = NULL,
@@ -74,13 +87,15 @@ void sess_resource_destroy(sess_resource *sr) {
   free(sr);
 }
 
-sess_resource* get_sess_resource(const cipher_auth_ctrl* cipher_auth) {
-  uint64_t hash_val = cipher_auth->alg_elems_md5;
+sess_resource* get_sess_resource(const PROV_CIPHER_CTX* cipher_auth) {
+  // uint64_t hash_val = cipher_auth->alg_elems_md5;
+  uint64_t hash_val = cipher_auth->md5_val;
   sess_resource* sr = hash_map_get(hash_val);
   if (sr) {
     log_debug("session exists!");
   } else {
-    sr = malloc(sizeof(sess_resource));
+    log_debug("session does not exit, creating one");
+    sr = (sess_resource*)malloc(sizeof(sess_resource));
     sr->sess = create_rte_crypto_sym_sess(cipher_auth);
     sr->ref_count = 1;
     hash_map_insert(hash_val, sr);

@@ -21,6 +21,8 @@ int main(int argc, char** argv) {
   int ret;
 
   const unsigned char plaintext[] = "Hello vCrypto Provider";
+  printf("original plain text:\n");
+  printf("%s\n", plaintext);
   size_t plaintext_len = sizeof(plaintext);
 
   unsigned char key[32] = {0};
@@ -68,13 +70,16 @@ int main(int argc, char** argv) {
   log_trace("EVP_DecryptInit_ex2 success");
 
   unsigned char decrypted_text[1024] = {0};
-  ret = EVP_Cipher(ctx, decrypted_text, crypted_text, sizeof(crypted_text));
+  // BUG: set decrypted_text len to 32, because we know it should be 32
+  ret = EVP_Cipher(ctx, decrypted_text, crypted_text, 32);
   assert(ret && "EVP_Cipher failed");
   log_trace("EVP_Cipher success");
 
   EVP_CIPHER_CTX_free(ctx);
   log_trace("free old ctx");
 
+  printf("decrypted text:\n");
+  printf("%s\n", decrypted_text);
   if (strcmp((char*)crypted_text, (char*)decrypted_text) != 0) {
     log_error("cryption or decryption failed");
   }

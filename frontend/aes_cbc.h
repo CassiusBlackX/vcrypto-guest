@@ -4,38 +4,15 @@
 #include <rte_cryptodev.h>
 #include <openssl/core_dispatch.h>
 
-#define CIPHER_DIRECTION_ENCRYPT 0
-#define CIPHER_DIRECTION_DECRYPT 1
-
-#define VCRYPTO_AES_CBC_CTX_BUF_SIZE 4096
-
-typedef struct cipher_auth_t {
-  uint32_t alg_nid;
-  uint32_t direction; // 0 for encrypt, 1 for decrypt
-  uint32_t cipher_key_len;
-  uint32_t cipher_iv_len;
-  uint32_t auth_key_len;
-  uint8_t cipher_key_data[32];
-  uint8_t cipher_iv_data[16];
-  uint8_t auth_key_data[64];
-  uint64_t alg_elems_md5;
-} cipher_auth_ctrl;
-
-#define CTX_STATUS_INITED 0x1
-#define CTX_STATUS_SESSION_CREATED 0x2
-#define CTX_SET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags |= (flag))
-#define CTX_UNSET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags &= ~(flag))
-#define CTX_GET_STATUS_FLAG(ctx, flag) ((ctx)->status_flags & (flag))
+#include "cipher_common.h"
 
 typedef struct vcrypto_aes_cbc_ctx_t {
-  cipher_auth_ctrl cipher_auth;
-  struct rte_cryptodev_sym_session* sess;
-  uint32_t status_flags;
+  PROV_CIPHER_CTX base;  // must be the first member
 
-  // stream input
-  unsigned char* buf;
-  size_t buf_size;
-  size_t buf_len;
+  unsigned int ctx_status_inited : 1;
+  unsigned int ctx_status_session_created : 1;
+
+  struct rte_cryptodev_sym_session* sess;
 } vcrypto_aes_cbc_ctx;
 
 OSSL_FUNC_cipher_newctx_fn vcrypto_aes_cbc_newctx;

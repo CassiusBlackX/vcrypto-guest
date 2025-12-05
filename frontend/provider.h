@@ -14,6 +14,8 @@ typedef struct vcrypto_provider_ctx_st {
   OSSL_LIB_CTX *libctx;
 } vcrypto_prov_ctx;
 
+OSSL_LIB_CTX* prov_libctx_of(vcrypto_prov_ctx *ctx);
+
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof((x)[0]))
 #define VCRYPTO_PROVIDER_NAMES_AES_128_CBC "AES-128-CBC"
 #define VCRYPTO_PROVIDER_NAMES_AES_256_CBC "AES-256-CBC"

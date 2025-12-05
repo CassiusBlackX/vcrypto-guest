@@ -2,12 +2,14 @@
 #include <string.h>
 
 #include <openssl/proverr.h>
+#include <openssl/e_os2.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
 
 #include <log.h>
 
 #include "cipher_common.h"
-#include "openssl/e_os2.h"
-#include "openssl/params.h"
+#include "provider.h"
 
 static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
@@ -21,12 +23,11 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
     OSSL_PARAM_END};
 
-const OSSL_PARAM *
-ossl_cipher_generic_gettable_params(ossl_unused void *provctx) {
+const OSSL_PARAM *vcrypto_cipher_generic_gettable_params(ossl_unused void *provctx) {
   return cipher_known_gettable_params;
 }
 
-int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
+int vcrypto_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    uint64_t flags, size_t kbits, size_t blkbits,
                                    size_t ivbits) {
   OSSL_PARAM *p;
@@ -81,10 +82,11 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
     log_error("OSSL_CIPHER_PARAM_IVLEN set failed");
     return 0;
   }
+  log_debug("ossl_generic_get_params success");
   return 1;
 }
 
-static const OSSL_PARAM ossl_cipher_generic_known_gettable_ctx_params[] = {
+static const OSSL_PARAM vcrypto_cipher_generic_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
@@ -96,12 +98,13 @@ static const OSSL_PARAM ossl_cipher_generic_known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-const OSSL_PARAM *ossl_cipher_generic_gettable_ctx_params(ossl_unused void *cctx,
+const OSSL_PARAM *vcrypto_cipher_generic_gettable_ctx_params(ossl_unused void *cctx,
                                         ossl_unused void *provctx) {
-  return ossl_cipher_generic_known_gettable_ctx_params;
+    log_trace("enter ossl_cipher_generic_gettable_ctx_params");
+  return vcrypto_cipher_generic_known_gettable_ctx_params;
 }
 
-static const OSSL_PARAM ossl_cipher_generic_known_settable_ctx_params[] = {
+static const OSSL_PARAM vcrypto_cipher_generic_known_settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_USE_BITS, NULL),
@@ -111,12 +114,13 @@ static const OSSL_PARAM ossl_cipher_generic_known_settable_ctx_params[] = {
 };
 
 
-const OSSL_PARAM *ossl_cipher_generic_settable_ctx_params(ossl_unused void *cctx,
+const OSSL_PARAM *vcrypto_cipher_generic_settable_ctx_params(ossl_unused void *cctx,
                                         ossl_unused void *provctx) {
-  return ossl_cipher_generic_known_settable_ctx_params;
+    log_trace("enter ossl_cipher_generic_settable_ctx_params");
+  return vcrypto_cipher_generic_known_settable_ctx_params;
 }
 
-void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx) {
+void vcrypto_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx) {
     if (ctx != NULL && ctx->alloced) {
         OPENSSL_free(ctx->tlsmac);
         ctx->alloced = 0;
@@ -129,13 +133,14 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *iv, size_t ivlen,
                                         const OSSL_PARAM params[], int enc)
 {
+    log_debug("entering cipher_generic_init_internal");
     ctx->num = 0;
     ctx->bufsz = 0;
     ctx->updated = 0;
     ctx->enc = enc ? 1 : 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
-        if (!ossl_cipher_generic_initiv(ctx, iv, ivlen))
+        if (!vcrypto_cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
     }
     if (iv == NULL && ctx->iv_set
@@ -151,14 +156,19 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                 log_error("invalid key length at cipher_generic_init_internal");
                 return 0;
             }
+            // BUG: how do we transmit key to backend? 
+            // the following way can not transmit key!
+            log_debug("memcopying key into ctx->ks");
+            ctx->ks = malloc(keylen);
+            memcpy((void*)(ctx->ks), key, keylen);
         } else {
             ctx->keylen = keylen;
         }
     }
-    return ossl_cipher_generic_set_ctx_params(ctx, params);
+    return vcrypto_cipher_generic_set_ctx_params(ctx, params);
 }
 
-int ossl_cipher_generic_einit(void *vctx, const unsigned char *key,
+int vcrypto_cipher_generic_einit(void *vctx, const unsigned char *key,
                               size_t keylen, const unsigned char *iv,
                               size_t ivlen, const OSSL_PARAM params[])
 {
@@ -166,7 +176,7 @@ int ossl_cipher_generic_einit(void *vctx, const unsigned char *key,
                                         iv, ivlen, params, 1);
 }
 
-int ossl_cipher_generic_dinit(void *vctx, const unsigned char *key,
+int vcrypto_cipher_generic_dinit(void *vctx, const unsigned char *key,
                               size_t keylen, const unsigned char *iv,
                               size_t ivlen, const OSSL_PARAM params[])
 {
@@ -174,7 +184,7 @@ int ossl_cipher_generic_dinit(void *vctx, const unsigned char *key,
                                         iv, ivlen, params, 0);
 }
 
-int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int vcrypto_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
@@ -222,7 +232,7 @@ int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int vcrypto_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -277,7 +287,7 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+int vcrypto_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
                                size_t ivlen)
 {
     if (ivlen != ctx->ivlen
@@ -291,3 +301,20 @@ int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
     return 1;
 }
 
+void vcrypto_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits, size_t ivbits,
+                                 unsigned int mode, uint64_t flags, void *provctx) {
+    PROV_CIPHER_CTX* ctx = (PROV_CIPHER_CTX*)vctx;
+    if ((flags & PROV_CIPHER_FLAG_INVERSE_CIPHER) != 0)
+        ctx->inverse_cipher = 1;
+    if ((flags & PROV_CIPHER_FLAG_VARIABLE_LENGTH) != 0)
+        ctx->variable_keylength = 1;
+
+    ctx->pad = 1;
+    ctx->keylen = ((kbits) / 8);
+    ctx->ivlen = ((ivbits) / 8);
+    ctx->mode = mode;
+    ctx->blocksize = blkbits / 8;
+    if (provctx != NULL)
+        // ctx->libctx = (PROV_CTX*)provctx->libctx;
+        ctx->libctx = prov_libctx_of(provctx);
+}

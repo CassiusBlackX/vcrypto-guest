@@ -5,6 +5,7 @@ add_library(vcrypto SHARED
   provider.c
   events.c
   protocol.c
+  cipher_common.c
 )
 target_sources(vcrypto PRIVATE
   aes_cbc.c
