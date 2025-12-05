@@ -76,7 +76,7 @@ bool vcrypto_recvmsg(int connfd, void* recv_data_buf, size_t recv_len, int *recv
     recv_len_partial = recvmsg(connfd, &msg, 0);
     if (recv_len_partial < 0) {
       if (errno == EAGAIN) {
-        log_info("EAGAIN in vcrypto_recvmsg!");
+        log_debug("EAGAIN in vcrypto_recvmsg!");
         usleep(USLEEP_TIME);
         continue;
       } else {
@@ -205,7 +205,7 @@ bool vcrypto_send(int connfd, void* send_data_buf, size_t send_len) {
     send_len_partial = write(connfd, send_data_buf, send_len);
     if (send_len_partial < 0) {
       if (errno == EAGAIN) {
-        log_info("EAGAIN in vcrypto_send");
+        log_debug("EAGAIN in vcrypto_send");
         usleep(USLEEP_TIME);
         continue;
       } else {
