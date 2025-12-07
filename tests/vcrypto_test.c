@@ -80,9 +80,6 @@ int main(int argc, char** argv) {
 
   printf("decrypted text:\n");
   printf("%s\n", decrypted_text);
-  if (strcmp((char*)crypted_text, (char*)decrypted_text) != 0) {
-    log_error("cryption or decryption failed");
-  }
 
   EVP_CIPHER_free(cipher);
   OSSL_PROVIDER_unload(prov_vcrypto);

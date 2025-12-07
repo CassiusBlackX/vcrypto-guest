@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ./build/backend/vcrypto_engine_backend \
--l 6-7 \
+-l 3-4 \
 --file-prefix=vcrypto \
 --proc-type=primary \
---vdev crypto_openssl
+--vdev crypto_uadk

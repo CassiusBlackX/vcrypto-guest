@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_C_COMPILER clang)
+# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_C_FLAGS_RELEASE "-Ofast -march=native -mtune=native -flto -fstrict-aliasing -ffast-math")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 project(vcrypto_guest LANGUAGES C)
 
 option(RELEASE_MODE "Build for release: static link third-party libs" OFF)
@@ -88,32 +90,6 @@ target_include_directories(common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# local openssl
-set(OPENSSL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openssl)
-set(OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl_build)
-set(OPENSSL_INCLUDE_DIR ${OPENSSL_BINARY_DIR}/include)
-set(OPENSSL_LIB_DIR ${OPENSSL_BINARY_DIR}/lib)
-set(OPENSSL_STAMP ${OPENSSL_BINARY_DIR}/.openssl_configured)
-file(MAKE_DIRECTORY ${OPENSSL_BINARY_DIR})
-if(NOT EXISTS ${OPENSSL_STAMP})
-  add_custom_command(
-    OUTPUT ${OPENSSL_STAMP}
-    COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR}
-            ./Configure no-shared --prefix=${OPENSSL_BINARY_DIR} --debug
-    COMMAND ${CMAKE_COMMAND} -E touch ${OPENSSL_STAMP}
-    COMMENT "Configuring OpenSSL (first-time build)"
-    VERBATIM
-  )
-endif()
-add_custom_target(build_openssl ALL
-  COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR} make -j$(nproc)
-  COMMAND ${CMAKE_COMMAND} -E chdir ${OPENSSL_SOURCE_DIR} make install_sw
-  DEPENDS ${OPENSSL_STAMP}
-  COMMENT "Building OpenSSL before building vcrypto series"
-)
-message(STATUS "Built local OpenSSL")
-
-  
 # set compiler warning
 add_library(compiler_warnings INTERFACE)
 target_compile_options(compiler_warnings INTERFACE

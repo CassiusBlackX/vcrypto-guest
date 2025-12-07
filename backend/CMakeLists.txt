@@ -17,6 +17,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   klib
   common
   compiler_warnings
+  crypto # system default openssl crypto library
 )
 
 if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
@@ -31,16 +32,10 @@ if(NOT RELEASE_MODE)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     log_c_shared
     vcrypto_engine_socket_shared
-    ${OPENSSL_LIB_DIR}/libcrypto.a # local openssl crypto lib
-  )
-  add_dependencies(${PROJECT_NAME} build_openssl)
-  target_include_directories(${PROJECT_NAME} PRIVATE
-    ${OPENSSL_INCLUDE_DIR}
   )
 else()
   target_link_libraries(${PROJECT_NAME} PRIVATE
     log_c
     vcrypto_engine_socket
-    crypto # system default openssl crypto library
   )
 endif()

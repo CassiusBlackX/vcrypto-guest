@@ -7,11 +7,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pthread
   ${DPDK_LIBRARIES}
   compiler_warnings
-  ${OPENSSL_LIB_DIR}/libcrypto.a # local openssl crypto lib
-)
-add_dependencies(${PROJECT_NAME} build_openssl)
-target_include_directories(${PROJECT_NAME} PRIVATE
-  ${OPENSSL_INCLUDE_DIR}
+  crypto
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   "PROJECT_BUILD_DIR=\"${CMAKE_BINARY_DIR}\""

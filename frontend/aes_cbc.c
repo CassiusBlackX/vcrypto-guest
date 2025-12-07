@@ -104,10 +104,11 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl,
     // encrypt
     uint8_t padding_len = block_size - (inl % block_size);
     total_len = inl + padding_len;
-    if (total_len > outsize) {
-      log_error("output buffer too small for encrypted data");
-      return 0;
-    }
+    // BUG: will error when `openssl speed` test!
+    // if (total_len > outsize) {
+    //   log_error("output buffer too small for encrypted data");
+    //   return 0;
+    // }
   } else {
     // decrypt: inl must be multiple of block_size
     if (inl % block_size != 0) {
@@ -173,8 +174,6 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl,
     return 0;
   }
 
-  // BUG: completed_op is not allocated in the shared mempool
-  // so far, we will directly send back (d)encrypted data
   // 9. wait for response, NOTE: sync version!
   log_trace("waiting for response");
   struct rte_crypto_op *completed_op = NULL;

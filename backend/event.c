@@ -41,6 +41,7 @@ bool init_server(const char *socket_path, int *out_listen_fd,
 
   // create listen fd
   listen_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  // listen_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (listen_fd < 0) {
     log_error("failed to create listen_fd with err: %s", strerror(errno));
     goto cleanup;
@@ -208,7 +209,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
         // frontend msg
         int client_fd = events[i].data.fd;
         if (handle_fe_msg(client_fd)) {
-          log_trace("success handle msg from client: %d", client_fd);
+          log_debug("success handle msg from client: %d", client_fd);
         }
       } else if (events[i].events & (EPOLLRDHUP | EPOLLERR)) {
         // connection close
@@ -233,7 +234,7 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
       }
     }
     if (cr->num_valid_ops > 0) {
-      log_debug("dequeued [%d] ops", cr->num_valid_ops);
+      log_trace("dequeued [%d] ops", cr->num_valid_ops);
     }
     // enqueue into cryptodev
     if (cr->num_valid_ops > 0) {

@@ -92,13 +92,13 @@ static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_default_ci
 
 
 static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operation_id, int *no_cache) {
-  // static bool prov_init = false;
-  // prov = OSSL_PROVIDER_load(NULL, "default");
-  // if (!prov_init) {
-  //   prov_init = true;
-  //   // vcrypto provider takes higher priority than openssl default
-  //   EVP_set_default_properties(NULL, "?provider=vcrypto");
-  // }
+  static bool prov_init = false;
+  prov = OSSL_PROVIDER_load(NULL, "default");
+  if (!prov_init) {
+    prov_init = true;
+    // vcrypto provider takes higher priority than openssl default
+    EVP_set_default_properties(NULL, "?provider=vcrypto");
+  }
 
   if(no_cache) *no_cache = 0;
  
@@ -110,6 +110,7 @@ static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operatio
   //  return vcrypto_exported_asym_ciphers;
   default:
     return OSSL_PROVIDER_query_operation(prov, operation_id, no_cache);
+    // return NULL;
  }
 }
 
@@ -146,7 +147,7 @@ static void vcrypto_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE 
  
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out, void **provctx) {
-  log_set_level(LOG_TRACE);
+  log_set_level(LOG_INFO);
   char *argv[8] = {
     "./vcrypto_engine_frontend", "--proc-type=secondary", "--file-prefix=vcrypto", "-l", "6-7", 0};
   if (rte_eal_init(5, argv) < 0) {
