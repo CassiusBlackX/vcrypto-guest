@@ -4,4 +4,4 @@
 -l 3-4 \
 --file-prefix=vcrypto \
 --proc-type=primary \
---vdev crypto_uadk
+--vdev crypto_openssl
