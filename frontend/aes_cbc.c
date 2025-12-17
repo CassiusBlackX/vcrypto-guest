@@ -31,6 +31,15 @@
 // #define AEAD_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAGS_CUSTOM_IV)
 #define AEAD_FLAGS 0
 
+OSSL_FUNC_cipher_newctx_fn vcrypto_aes_cbc_newctx;
+// return 1 for success and 0 for error
+OSSL_FUNC_cipher_encrypt_init_fn vcrypto_aes_cbc_einit;
+// return 1 for success and 0 for error
+OSSL_FUNC_cipher_decrypt_init_fn vcrypto_aes_cbc_dinit;
+// return 1 for success and 0 for error
+OSSL_FUNC_cipher_cipher_fn vcrypto_aes_cbc_cipher;
+OSSL_FUNC_cipher_freectx_fn vcrypto_aes_cbc_freectx;
+
 void *vcrypto_aes_cbc_newctx(void *provctx) {
   vcrypto_aes_cbc_ctx *ctx = OPENSSL_zalloc(sizeof((*ctx)));
   if (!ctx) {
@@ -142,7 +151,7 @@ int vcrypto_aes_cbc_cipher(void *cctx, unsigned char *out, size_t *outl,
   // 5. crypto op allocation
   log_trace("going to crypto op allocation");
   struct rte_crypto_op *op =
-      rte_crypto_op_alloc(sym_crypto_op_mempool, RTE_CRYPTO_OP_TYPE_SYMMETRIC);
+      rte_crypto_op_alloc(crypto_op_mempool, RTE_CRYPTO_OP_TYPE_SYMMETRIC);
   if (!op) {
     rte_pktmbuf_free(mbuf);
     log_error("crypto op alloc failed");

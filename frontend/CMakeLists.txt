@@ -5,10 +5,12 @@ add_library(vcrypto SHARED
   provider.c
   events.c
   protocol.c
-  cipher_common.c
+  # cipher_common.c
+  rsa_local.c
 )
 target_sources(vcrypto PRIVATE
-  aes_cbc.c
+  # aes_cbc.c
+  rsa_enc_dec.c
 )
 
 target_link_libraries(vcrypto PRIVATE

@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <rte_crypto.h>
+#include <rte_crypto_asym.h>
 #include <rte_crypto_sym.h>
 #include <stdbool.h>
 
@@ -27,6 +28,29 @@ static inline bool vcrypto_is_chained_cipher(int nid) {
   } else {
     return false;
   }
+}
+
+static struct rte_cryptodev_asym_session* create_rte_crypto_asym_sess(const rsa_data *key_data) {
+  // xform for private key
+  struct rte_crypto_rsa_xform rsa_xform = {
+    .key_type = RTE_RSA_KEY_TYPE_EXP,
+    .n = {.data = (uint8_t *)key_data->n, .length = RSA_MAX_KEY_SIZE_BYTES},
+    .e = {.data = (uint8_t *)key_data->e, .length = RSA_MAX_KEY_SIZE_BYTES},
+    .d = {.data = (uint8_t *)key_data->d, .length = RSA_MAX_KEY_SIZE_BYTES},
+    .padding.type = RTE_CRYPTO_RSA_PADDING_PKCS1_5,
+  };
+  struct rte_crypto_asym_xform asym_xform = {
+    .next = NULL,
+    .xform_type = RTE_CRYPTO_ASYM_XFORM_RSA,
+    .rsa = rsa_xform,
+  };
+  struct rte_cryptodev_asym_session *sess = NULL;
+  int ret = rte_cryptodev_asym_session_create(cr->cdev_id, &asym_xform, asym_crypto_session_pool, (void**)&sess);
+  if (ret != 0 || !sess) {
+    fprintf(stderr, "failed to create asym_session\n");
+    return NULL;
+  }
+  return sess;
 }
 
 static struct rte_crypto_sym_session* create_rte_crypto_sym_sess(const PROV_CIPHER_CTX* cipher_auth) {
@@ -83,11 +107,12 @@ void sess_resource_destroy(sess_resource *sr) {
     log_warn("pointer sr is NULL");
     return;
   }
-  rte_cryptodev_sym_session_free(cr->cdev_id, sr->sess);
+  // rte_cryptodev_sym_session_free(cr->cdev_id, sr->sess);
+  rte_cryptodev_asym_session_free(cr->cdev_id, sr->sess);
   free(sr);
 }
 
-sess_resource* get_sess_resource(const PROV_CIPHER_CTX* cipher_auth) {
+sess_resource* get_sess_resource(const rsa_data* cipher_auth) {
   // uint64_t hash_val = cipher_auth->alg_elems_md5;
   uint64_t hash_val = cipher_auth->md5_val;
   sess_resource* sr = hash_map_get(hash_val);
@@ -96,7 +121,7 @@ sess_resource* get_sess_resource(const PROV_CIPHER_CTX* cipher_auth) {
   } else {
     log_debug("session does not exit, creating one");
     sr = (sess_resource*)malloc(sizeof(sess_resource));
-    sr->sess = create_rte_crypto_sym_sess(cipher_auth);
+    sr->sess = create_rte_crypto_asym_sess(cipher_auth);
     sr->ref_count = 1;
     hash_map_insert(hash_val, sr);
   }

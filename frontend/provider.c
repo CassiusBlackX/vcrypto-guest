@@ -78,18 +78,23 @@ static int vcrypto_get_params(void *provctx, OSSL_PARAM params[]) {
 }
 
 // extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
-extern const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[];
+// extern const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[];
 
-static const OSSL_ALGORITHM_CAPABLE vcrypto_default_ciphers[] = {
-  // ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
-  ALG(VCRYPTO_PROVIDER_NAMES_AES_256_CBC, vcrypto_aes_256_cbc_fucntions),
+// static const OSSL_ALGORITHM_CAPABLE vcrypto_default_ciphers[] = {
+//   // ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
+//   ALG(VCRYPTO_PROVIDER_NAMES_AES_256_CBC, vcrypto_aes_256_cbc_fucntions),
 
-  // the following line must be kept to indicate the end of array
-  {{NULL, NULL, NULL}, NULL},
+//   // the following line must be kept to indicate the end of array
+//   {{NULL, NULL, NULL}, NULL},
+// };
+
+// static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_default_ciphers)];
+
+extern const OSSL_DISPATCH vcrypto_rsa2048_enc_dec_functions[];
+static const OSSL_ALGORITHM vcrypto_exported_asym_ciphers[] = {
+  {"RSA", VCRYPTO_DEFAULT_PROPERTIES, vcrypto_rsa2048_enc_dec_functions},
+  {NULL, NULL, NULL},
 };
-
-static OSSL_ALGORITHM vcrypto_exported_sym_ciphers[OSSL_NELEM(vcrypto_default_ciphers)];
-
 
 static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operation_id, int *no_cache) {
   static bool prov_init = false;
@@ -103,11 +108,12 @@ static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operatio
   if(no_cache) *no_cache = 0;
  
  switch (operation_id) {
-  case OSSL_OP_CIPHER:
-    log_debug("query vcrypto ciphers!");
-    return vcrypto_exported_sym_ciphers;
-  // case OSSL_OP_ASYM_CIPHER:
-  //  return vcrypto_exported_asym_ciphers;
+  // case OSSL_OP_CIPHER:
+    // log_debug("query vcrypto ciphers!");
+    // return vcrypto_exported_sym_ciphers;
+  case OSSL_OP_ASYM_CIPHER:
+    log_debug("query vcrypto asym ciphers!");
+   return vcrypto_exported_asym_ciphers;
   default:
     return OSSL_PROVIDER_query_operation(prov, operation_id, no_cache);
     // return NULL;
@@ -147,7 +153,7 @@ static void vcrypto_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE 
  
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out, void **provctx) {
-  log_set_level(LOG_INFO);
+  log_set_level(LOG_TRACE);
   char *argv[8] = {
     "./vcrypto_engine_frontend", "--proc-type=secondary", "--file-prefix=vcrypto", "-l", "6-7", 0};
   if (rte_eal_init(5, argv) < 0) {
@@ -186,7 +192,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
   *provctx = (void*)vcrypto_ctx;
 
   *out = vcrypto_dispatch_table;
-  vcrypto_prov_cache_exported_algorithms(vcrypto_default_ciphers, vcrypto_exported_sym_ciphers);
+  // vcrypto_prov_cache_exported_algorithms(vcrypto_default_ciphers, vcrypto_exported_sym_ciphers);
   
   log_info("vcrypto provider init success");
   return 1;
