@@ -63,9 +63,12 @@ static void *vcrypto_rsa_enc_dec_newctx(void *provctx) {
 
 static void vcrypto_rsa_enc_dec_freectx(void *cctx) {
   vcrypto_rsa_enc_dec_ctx *ctx = (vcrypto_rsa_enc_dec_ctx *)cctx;
-  if (ctx) {
-    OPENSSL_clear_free(ctx, sizeof(*ctx));
-  }
+  if (!ctx) return;
+  vcrypto_rsa_free(ctx->rsa);
+  EVP_MD_free(ctx->mgf1_md);
+  EVP_MD_free(ctx->oaep_md);
+  OPENSSL_free(ctx->oaep_label);
+  OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static int vcrypto_rsa_init(void *vctx, void *vrsa, const OSSL_PARAM params[],
@@ -359,7 +362,6 @@ static int vcrypto_rsa_encrypt(void *cctx, unsigned char *out, size_t *outlen,
                                size_t inlen) {
   log_trace("enter vcrypto_rsa_encrypt");
   int ret = 0;
-  log_trace("entering vcrypto_rsa_encrypt");
   vcrypto_rsa_enc_dec_ctx *ctx = (vcrypto_rsa_enc_dec_ctx *)cctx;
 
   // 1. status check

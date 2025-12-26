@@ -7,10 +7,12 @@ add_library(vcrypto SHARED
   protocol.c
   # cipher_common.c
   rsa_local.c
+  rsa_keymgmt_utils.c
 )
 target_sources(vcrypto PRIVATE
   # aes_cbc.c
   rsa_enc_dec.c
+  rsa_sign.c
 )
 
 target_link_libraries(vcrypto PRIVATE
