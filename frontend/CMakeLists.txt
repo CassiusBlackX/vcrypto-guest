@@ -60,6 +60,7 @@ set_target_properties(vcrypto PROPERTIES
 #   COMMENT "Creating symlink in ossl-moidules for vcrypto"
 # )
 
+set(OPENSSL_ENGINE_DIR "/usr/lib64/ossl-modules")
 install(
   TARGETS vcrypto
   LIBRARY DESTINATION ${OPENSSL_ENGINE_DIR}
