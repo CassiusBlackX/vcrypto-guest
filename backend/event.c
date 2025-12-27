@@ -239,8 +239,14 @@ int vcrypto_be_mainloop(int listen_fd, int epoll_fd) {
     // enqueue into cryptodev
     if (cr->num_valid_ops > 0) {
       log_trace("dequeue %d ops from rx_ring", cr->num_valid_ops);
+      log_trace("going to enqueue to cryptodev");
+      log_trace("cr->cdev_id: %d, cr->ops: %p, cr->ops[0]: %p, cr->num_valid_ops: %d", cr->cdev_id, cr->ops, cr->ops[0], cr->num_valid_ops);
+      if (cr->ops[0]->type == RTE_CRYPTO_OP_TYPE_SYMMETRIC) {
+        log_trace("received sym op, sess: %p, m_src: %p", cr->ops[0]->sym->session, cr->ops[0]->sym->m_src);
+      }
       int num_ops_enqueued = rte_cryptodev_enqueue_burst(
           cr->cdev_id, 0, cr->ops, cr->num_valid_ops);
+      log_trace("cryptodev enqueue success");
       int num_ops_left = cr->num_valid_ops - num_ops_enqueued;
       if (num_ops_left > 0) {
         log_debug("not all ops enqueued into cryptodev once, moving the rest "

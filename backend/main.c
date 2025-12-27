@@ -16,7 +16,7 @@ static void SIGINT_handler(int id) {
 }
 
 int main(int argc, char **argv) {
-  log_set_level(LOG_DEBUG);
+  log_set_level(LOG_INFO);
   log_info("vcrypto_daemon starting...");
   
   signal(SIGINT, SIGINT_handler);
