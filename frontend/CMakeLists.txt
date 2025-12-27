@@ -5,6 +5,7 @@ add_library(vcrypto SHARED
   provider.c
   events.c
   protocol.c
+  cipher_common.c
 )
 target_sources(vcrypto PRIVATE
   aes_cbc.c
@@ -16,6 +17,7 @@ target_link_libraries(vcrypto PRIVATE
   klib
   common
   compiler_warnings
+  crypto # system default openssl crypto library
 )
 
 if(DPDK_FOUND AND DPDK_LIBRARY_DIRS)
@@ -31,24 +33,14 @@ if(NOT RELEASE_MODE)
     log_c_shared
     vcrypto_engine_socket_shared
     xxHash_shared
-    ${OPENSSL_LIB_DIR}/libcrypto.a # local openssl crypto lib
-  )
-  add_dependencies(vcrypto build_openssl)
-  target_include_directories(vcrypto PRIVATE
-    ${OPENSSL_INCLUDE_DIR}
   )
 else()
   target_link_libraries(vcrypto PRIVATE
     log_c
     vcrypto_engine_socket
     xxHash
-    crypto # system default openssl crypto library
   )
 endif()
-
-target_compile_definitions(vcrypto PRIVATE
-  OPENSSL_ENABLE_VCRYPTO_SMALL_PACKET_CIPHER_OFFLOADS
-)
 
 set_target_properties(vcrypto PROPERTIES
   VERSION 1.0
@@ -58,13 +50,15 @@ set_target_properties(vcrypto PROPERTIES
 )
 
 # for debug, soft link to local openssl ossl-modules dir
-add_custom_command(TARGET vcrypto
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E create_symlink
-    $<TARGET_FILE:vcrypto>
-    ${OPENSSL_LIB_DIR}/ossl-modules/vcrypto.so
-  COMMENT "Creating symlink in ossl-moidules for vcrypto"
-)
+# HOWEVER: normal user cannot write to /usr/lib64
+# set(OPENSSL_LIB_DIR "/usr/lib64")
+# add_custom_command(TARGET vcrypto
+#   POST_BUILD
+#   COMMAND ${CMAKE_COMMAND} -E create_symlink
+#     $<TARGET_FILE:vcrypto>
+#     ${OPENSSL_LIB_DIR}/ossl-modules/vcrypto.so
+#   COMMENT "Creating symlink in ossl-moidules for vcrypto"
+# )
 
 install(
   TARGETS vcrypto

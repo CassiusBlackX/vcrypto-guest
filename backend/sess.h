@@ -5,7 +5,7 @@
 #include <rte_cryptodev.h>
 #include <rte_ring.h>
 
-#include "../frontend/aes_cbc.h"
+#include "../frontend/cipher_common.h"
 
 // TODO: the struct is not needed!
 // we can use rte_cryptodev_session_priate_data, filling the refcout inside
@@ -18,7 +18,7 @@ typedef struct {
 void sess_resource_destroy(sess_resource* sr);
 
 // used by protocol
-sess_resource* get_sess_resource(const cipher_auth_ctrl* cipher_auth);
+sess_resource* get_sess_resource(const PROV_CIPHER_CTX* cipher_auth);
 void release_sess_resource(uint64_t md5_hash);
 
 #endif // VCRYPTO_GUEST_BE_SESS

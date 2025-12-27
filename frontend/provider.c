@@ -77,11 +77,11 @@ static int vcrypto_get_params(void *provctx, OSSL_PARAM params[]) {
   return 1;
 }
 
-extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
+// extern const OSSL_DISPATCH vcrypto_aes_128_cbc_fucntions[];
 extern const OSSL_DISPATCH vcrypto_aes_256_cbc_fucntions[];
 
 static const OSSL_ALGORITHM_CAPABLE vcrypto_default_ciphers[] = {
-  ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
+  // ALG(VCRYPTO_PROVIDER_NAMES_AES_128_CBC, vcrypto_aes_128_cbc_fucntions),
   ALG(VCRYPTO_PROVIDER_NAMES_AES_256_CBC, vcrypto_aes_256_cbc_fucntions),
 
   // the following line must be kept to indicate the end of array
@@ -110,6 +110,7 @@ static const OSSL_ALGORITHM* vcrypto_query_operation(void *provctx, int operatio
   //  return vcrypto_exported_asym_ciphers;
   default:
     return OSSL_PROVIDER_query_operation(prov, operation_id, no_cache);
+    // return NULL;
  }
 }
 
@@ -146,7 +147,7 @@ static void vcrypto_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE 
  
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle, const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out, void **provctx) {
-  log_set_level(LOG_TRACE);
+  log_set_level(LOG_INFO);
   char *argv[8] = {
     "./vcrypto_engine_frontend", "--proc-type=secondary", "--file-prefix=vcrypto", "-l", "6-7", 0};
   if (rte_eal_init(5, argv) < 0) {

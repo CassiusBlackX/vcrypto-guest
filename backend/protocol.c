@@ -10,7 +10,7 @@
 #include "protocol.h"
 #include "socket.h"
 #include "sess.h"
-#include "../frontend/aes_cbc.h"
+#include "../frontend/cipher_common.h"
 
 bool vcrypto_be_protocol_engine_init(int client_fd) {
   if (client_fd < 0) {
@@ -33,16 +33,20 @@ bool vcrypto_be_protocol_engine_init(int client_fd) {
 }
 
 bool vcrypto_be_protocol_create_sess(int client_fd) {
-  cipher_auth_ctrl cipher_auth;
+  PROV_CIPHER_CTX cipher_auth;
   bool ret = true;
   ret &= vcrypto_recv(client_fd, &cipher_auth, sizeof(cipher_auth));
-  sess_resource *sr =  get_sess_resource(&cipher_auth); 
+  log_debug("received md5_val: %zu", cipher_auth.md5_val);
+  sess_resource *sr = get_sess_resource(&cipher_auth); 
   if (!sr) {
     log_error("failed to create session");
   }
-  ret &= vcrypto_send(client_fd, sr->sess, sizeof(sr->sess));
+  uint64_t sess_addr = (uint64_t)(sr->sess);
+  log_trace("going to send sr->sess: %p, addr: %zx", sr->sess, sess_addr);
+  // ret &= vcrypto_send(client_fd, sr->sess, sizeof(typeof(sr->sess)));  // send a pointer
+  ret &= vcrypto_send(client_fd, &sess_addr, sizeof(uint64_t));
   if (ret) {
-    log_trace("success created session and sent to frontend");
+    log_trace("success created session: %p and sent to frontend", sr->sess);
   }
   return ret;
 }

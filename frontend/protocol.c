@@ -5,6 +5,8 @@
 #include <log.h>
 #include <socket.h>
 #include <defs.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #include "protocol.h"
 #include "aes_cbc.h"
@@ -97,9 +99,20 @@ bool vcrypto_fe_protocol_create_sess(vcrypto_aes_cbc_ctx *ctx) {
   enum msg_type_cmd cmd = MSG_TYPE_CREATE_SESS;
   bool ret = true;
   ret &= vcrypto_send(fe_connfd, &cmd, sizeof(cmd));
-  ret &= vcrypto_send(fe_connfd, &(ctx->cipher_auth), sizeof(ctx->cipher_auth));
- // DEBUG: compiler thinks it is not safe to pass a pointer through UDS
-  ret &= vcrypto_recv(fe_connfd, &(ctx->sess), sizeof(void*)); 
+  log_debug("sending ctx->base to backend");
+  log_debug("md5 val: %zu", ctx->base.md5_val);
+  ret &= vcrypto_send(fe_connfd, &(ctx->base), sizeof(ctx->base));
+  // BUG: UDS seems to deny to send a pointer val
+  // using uint64_t ro receive pointer val
+  // and cast it into pointer
+  // this is probably wrong!
+  uint64_t addr = 0;
+  ret &= vcrypto_recv(fe_connfd, &addr, sizeof(void*)); 
+  // ret &= vcrypto_recv(fe_connfd, &(ctx->sess), sizeof(void*)); 
+  if (ret) {
+    log_debug("received addr: %zx", addr);
+  }
+  ctx->sess = (typeof(ctx->sess))addr;
   if (ctx->sess == NULL) {
     log_error("failed to receive ctx->sess from backend");
     return false;
@@ -111,7 +124,7 @@ bool vcrypto_fe_protocol_remove_sess(vcrypto_aes_cbc_ctx *ctx) {
   enum msg_type_cmd cmd = MSG_TYPE_REMOVE_SESS;
   bool ret = true;
   ret &= vcrypto_send(fe_connfd, &cmd, sizeof(cmd));
-  ret &= vcrypto_send(fe_connfd, &(ctx->cipher_auth), sizeof(ctx->cipher_auth));
+  ret &= vcrypto_send(fe_connfd, &(ctx->base), sizeof(ctx->base));
   return ret;
 }
 
