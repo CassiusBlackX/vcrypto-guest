@@ -740,7 +740,7 @@ static int vcrypto_param_build_set_int(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
 /// @param params      Optional OSSL_PARAM array to populate (may be NULL).
 ///
 /// @return 1 on success, 0 on failure.
-int vcrypto_rsa_params_30_to_data(const VCRYPTO_RSA_PSS_PARAMS_30 *pss, OSSL_PARAM_BLD *bld, OSSL_PARAM *params) {
+int vcrypto_rsa_pss_params_30_todata(const VCRYPTO_RSA_PSS_PARAMS_30 *pss, OSSL_PARAM_BLD *bld, OSSL_PARAM *params) {
   if (!vcrypto_rsa_pss_params_30_is_unrestricted(pss)) {
     int hashalg_nid = vcrypto_rsa_pss_params_30_hashalg(pss);
     int maskgenalg_nid = vcrypto_rsa_pss_params_30_maskgenalg(pss);

@@ -16,7 +16,7 @@ OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT1, NULL, 0),
 VCRYPTO_RSA *vcrypto_rsa_new_with_ctx(OSSL_LIB_CTX *libctx);
 int vcrypto_pss_params_fromdata(VCRYPTO_RSA_PSS_PARAMS_30 *pss_params, int *default_sets, const OSSL_PARAM params[], int rsa_type, OSSL_LIB_CTX *libctx);
 int vcrypto_rsa_todata(VCRYPTO_RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[], int include_private);
-int vcrypto_rsa_params_30_to_data(const VCRYPTO_RSA_PSS_PARAMS_30 *pss, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
+int vcrypto_rsa_pss_params_30_todata(const VCRYPTO_RSA_PSS_PARAMS_30 *pss, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int vcrypto_rsa_pss_params_30_hashalg(const VCRYPTO_RSA_PSS_PARAMS_30 *rsa_pss_params);
 const char* vcrypto_rsa_oaeppss_nid2name(int md);
 int vcrypto_rsa_oaeppss_md2nid(const EVP_MD *md);
