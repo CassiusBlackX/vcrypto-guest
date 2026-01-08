@@ -51,7 +51,7 @@ typedef struct rsa_st {
 
   OSSL_LIB_CTX *libctx;
   int32_t version;
-  // FIXME: is meth essential?
+  // FIXME: is meth necessary?
   // const RSA_METHOD *meth;
 
   /* Key RSA params */
@@ -69,13 +69,19 @@ typedef struct rsa_st {
   int dirty_cnt;
 } VCRYPTO_RSA;
 
+// TODO: it is recommended to use qt type of rsa_key_data instead of exp type
 typedef struct {
   uint8_t n[RSA_MAX_KEY_SIZE_BYTES];
   uint8_t e[RSA_MAX_KEY_SIZE_BYTES];
   uint8_t d[RSA_MAX_KEY_SIZE_BYTES];
   size_t e_len;
   uint64_t md5_val;
-} rsa_data;
+} rsa_key_data;
+
+typedef struct {
+  rsa_key_data *key_data;
+  struct rte_cryptodev_asym_session *sess;
+} rsa_session_data;
 
 typedef struct {
   OSSL_LIB_CTX *libctx;
@@ -96,8 +102,7 @@ typedef struct {
   unsigned int ctx_status_inited : 1;
   unsigned int ctx_status_session_created : 1;
 
-  rsa_data *key_data;
-  struct rte_cryptodev_asym_session *sess;
+  rsa_session_data *session_data;
 } vcrypto_rsa_enc_dec_ctx;
 
 typedef struct {
@@ -152,8 +157,7 @@ typedef struct {
   unsigned int ctx_status_inited : 1;
   unsigned int ctx_status_session_created : 1;
 
-  rsa_data *key_data;
-  struct rte_cryptodev_asym_session *sess;
+  rsa_session_data *session_data;
 } vcrypto_rsa_sign_ctx;
 
 int vcrypto_rsa_bits(const VCRYPTO_RSA *r);
@@ -170,7 +174,7 @@ int vcrypto_rsa_set0_factors(VCRYPTO_RSA *r, BIGNUM *p, BIGNUM *q);
 int vcrypto_rsa_set0_crt_params(VCRYPTO_RSA *r, BIGNUM *dmp1, BIGNUM *dmq1,
                                 BIGNUM *iqmp);
 int vcrypto_rsa_set0_key(VCRYPTO_RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
-rsa_data *VC_RSA_to_rsa_data(const VCRYPTO_RSA *r);
+rsa_key_data *VC_RSA_to_rsa_data(const VCRYPTO_RSA *r);
 
 
 #endif // VCRYPTO_GUEST_FE_RSA_ENC_DEC_H

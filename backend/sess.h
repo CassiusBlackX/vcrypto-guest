@@ -21,7 +21,7 @@ typedef struct {
 void sess_resource_destroy(sess_resource* sr);
 
 // used by protocol
-sess_resource* get_sess_resource(const rsa_data* cipher_auth);
+sess_resource* get_sess_resource(const rsa_key_data* cipher_auth);
 void release_sess_resource(uint64_t md5_hash);
 
 #endif // VCRYPTO_GUEST_BE_SESS

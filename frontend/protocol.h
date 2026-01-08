@@ -15,8 +15,8 @@ enum msg_type_cmd {
 
 bool vcrypto_fe_protocol_engine_init(char *socket_file_path);
 // bool vcrypto_fe_protocol_create_sess(vcrypto_aes_cbc_ctx* ctx);
-bool vcrypto_fe_protocol_create_sess(vcrypto_rsa_enc_dec_ctx *ctx);
-bool vcrypto_fe_protocol_remove_sess(vcrypto_rsa_enc_dec_ctx* ctx);
+bool vcrypto_fe_protocol_create_sess(rsa_session_data *ctx);
+bool vcrypto_fe_protocol_remove_sess(rsa_session_data *ctx);
 
 extern struct rte_ring *tx_ring;
 extern struct rte_ring *rx_ring;

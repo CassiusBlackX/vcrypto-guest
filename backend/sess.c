@@ -30,7 +30,7 @@ static inline bool vcrypto_is_chained_cipher(int nid) {
   }
 }
 
-static struct rte_cryptodev_asym_session* create_rte_crypto_asym_sess(const rsa_data *key_data) {
+static struct rte_cryptodev_asym_session* create_rte_crypto_asym_sess(const rsa_key_data *key_data) {
   // xform for private key
   struct rte_crypto_rsa_xform rsa_xform = {
     .key_type = RTE_RSA_KEY_TYPE_EXP,
@@ -112,7 +112,7 @@ void sess_resource_destroy(sess_resource *sr) {
   free(sr);
 }
 
-sess_resource* get_sess_resource(const rsa_data* cipher_auth) {
+sess_resource* get_sess_resource(const rsa_key_data* cipher_auth) {
   // uint64_t hash_val = cipher_auth->alg_elems_md5;
   uint64_t hash_val = cipher_auth->md5_val;
   sess_resource* sr = hash_map_get(hash_val);

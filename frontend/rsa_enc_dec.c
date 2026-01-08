@@ -82,8 +82,7 @@ static int vcrypto_rsa_init(void *vctx, void *vrsa, const OSSL_PARAM params[],
   ctx->operation = operation;
   ctx->ctx_status_inited = 1;
   ctx->ctx_status_session_created = 0;
-  ctx->sess = NULL;
-  ctx->key_data = NULL;
+  ctx->session_data = NULL;
 
   return vcrypto_rsa_enc_dec_set_ctx_params(ctx, params);
 }
@@ -372,8 +371,8 @@ static int vcrypto_rsa_encrypt(void *cctx, unsigned char *out, size_t *outlen,
 
   // 2. create session
   if (!ctx->ctx_status_session_created) {
-    ctx->key_data = VC_RSA_to_rsa_data(ctx->rsa);
-    if (!vcrypto_fe_protocol_create_sess(ctx)) {
+    ctx->session_data->key_data = VC_RSA_to_rsa_data(ctx->rsa);
+    if (!vcrypto_fe_protocol_create_sess(ctx->session_data)) {
       log_error("failed to create session in frontend");
       return 0;
     }
@@ -414,7 +413,7 @@ static int vcrypto_rsa_encrypt(void *cctx, unsigned char *out, size_t *outlen,
   }
 
   // 5. fill in op
-  rte_crypto_op_attach_asym_session(op, ctx->sess);
+  rte_crypto_op_attach_asym_session(op, ctx->session_data->sess);
   op->asym->rsa.op_type = RTE_CRYPTO_ASYM_OP_ENCRYPT;
   // FIXME: rsa.message.data requires uint8_t, instead of mbuf!
   op->asym->rsa.message.data = text_ptr;
@@ -486,8 +485,8 @@ static int vcrypto_rsa_decrypt(void *cctx, unsigned char *out, size_t *outlen,
 
   // 2. create session
   if (!ctx->ctx_status_session_created) {
-    ctx->key_data = VC_RSA_to_rsa_data(ctx->rsa);
-    if (!vcrypto_fe_protocol_create_sess(ctx)) {
+    ctx->session_data->key_data = VC_RSA_to_rsa_data(ctx->rsa);
+    if (!vcrypto_fe_protocol_create_sess(ctx->session_data)) {
       log_error("failed to create session in frontend");
       return 0;
     }
@@ -528,7 +527,7 @@ static int vcrypto_rsa_decrypt(void *cctx, unsigned char *out, size_t *outlen,
   }
 
   // 5. fill in op
-  rte_crypto_op_attach_asym_session(op, ctx->sess);
+  rte_crypto_op_attach_asym_session(op, ctx->session_data->sess);
   op->asym->rsa.op_type = RTE_CRYPTO_ASYM_OP_DECRYPT;
   op->asym->rsa.cipher.data = cipher_ptr;
   op->asym->rsa.cipher.length = RSA_MAX_KEY_SIZE_BYTES;

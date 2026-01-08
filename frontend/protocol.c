@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "aes_cbc.h"
-#include "rsa.h"
 #include "protocol.h"
+#include "rsa.h"
 
 struct rte_ring *tx_ring;
 struct rte_ring *rx_ring;
@@ -100,14 +100,13 @@ bool vcrypto_fe_protocol_engine_init(char *socket_file_path) {
   return ret;
 }
 
-bool vcrypto_fe_protocol_create_sess(vcrypto_rsa_enc_dec_ctx *ctx) {
+bool vcrypto_fe_protocol_create_sess(rsa_session_data *ctx) {
   enum msg_type_cmd cmd = MSG_TYPE_CREATE_SESS;
   bool ret = true;
   ret &= vcrypto_send(fe_connfd, &cmd, sizeof(cmd));
   log_debug("sending ctx->base to backend");
   log_debug("ctx->rsa_continuous_data->md5_val: %lld", ctx->key_data->md5_val);
-  ret &= vcrypto_send(fe_connfd, ctx->key_data,
-                      sizeof(*(ctx->key_data)));
+  ret &= vcrypto_send(fe_connfd, ctx, sizeof(*(ctx)));
   // BUG: UDS seems to deny to send a pointer val
   // using uint64_t ro receive pointer val
   // and cast it into pointer
@@ -126,11 +125,11 @@ bool vcrypto_fe_protocol_create_sess(vcrypto_rsa_enc_dec_ctx *ctx) {
   return ret;
 }
 
-bool vcrypto_fe_protocol_remove_sess(vcrypto_rsa_enc_dec_ctx *ctx) {
+bool vcrypto_fe_protocol_remove_sess(rsa_session_data *ctx) {
   enum msg_type_cmd cmd = MSG_TYPE_REMOVE_SESS;
   bool ret = true;
   ret &= vcrypto_send(fe_connfd, &cmd, sizeof(cmd));
-  ret &= vcrypto_send(fe_connfd, ctx->key_data,
-                      sizeof(*(ctx->key_data)));
+  ret &=
+      vcrypto_send(fe_connfd, ctx, sizeof(*ctx));
   return ret;
 }

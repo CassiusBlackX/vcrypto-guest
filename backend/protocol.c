@@ -35,7 +35,7 @@ bool vcrypto_be_protocol_engine_init(int client_fd) {
 
 bool vcrypto_be_protocol_create_sess(int client_fd) {
   // PROV_CIPHER_CTX cipher_auth;
-  rsa_data cipher_auth;
+  rsa_key_data cipher_auth;
   bool ret = true;
   ret &= vcrypto_recv(client_fd, &cipher_auth, sizeof(cipher_auth));
   log_debug("received md5_val: %zu", cipher_auth.md5_val);

@@ -145,8 +145,8 @@ int vcrypto_rsa_set0_key(VCRYPTO_RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
   return 1;
 }
 
-rsa_data* VC_RSA_to_rsa_data(const VCRYPTO_RSA* r) {
-  rsa_data *data = malloc(sizeof(*data));
+rsa_key_data* VC_RSA_to_rsa_data(const VCRYPTO_RSA* r) {
+  rsa_key_data *data = malloc(sizeof(*data));
   if (!data) {
     log_error("failed to malloc for rsa_data");
     return NULL;
