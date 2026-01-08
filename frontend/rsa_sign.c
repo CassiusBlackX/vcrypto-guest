@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -240,10 +241,11 @@ static OSSL_FUNC_signature_sign_init_fn vcrypto_rsa_sinit;
 static OSSL_FUNC_signature_verify_init_fn vcrypto_rsa_vinit;
 static OSSL_FUNC_signature_sign_fn vcrypto_rsa_sign;
 static OSSL_FUNC_signature_verify_fn vcrypto_rsa_verify;
-static OSSL_FUNC_signature_digest_sign_init_fn vcrypto_rsa_digest_sinit;
-static OSSL_FUNC_signature_digest_sign_fn vcrypto_rsa_digest_sign;
-static OSSL_FUNC_signature_digest_verify_init_fn vcrypto_rsa_digest_vinit;
-static OSSL_FUNC_signature_digest_verify_fn vcrypto_rsa_digest_verify;
+// TODO: currently we do not implement digest_sign/verify func!
+// static OSSL_FUNC_signature_digest_sign_init_fn vcrypto_rsa_digest_sinit;
+// static OSSL_FUNC_signature_digest_sign_fn vcrypto_rsa_digest_sign;
+// static OSSL_FUNC_signature_digest_verify_init_fn vcrypto_rsa_digest_vinit;
+// static OSSL_FUNC_signature_digest_verify_fn vcrypto_rsa_digest_verify;
 static OSSL_FUNC_signature_set_ctx_params_fn vcrypto_rsa_sign_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn
     vcrypto_rsa_sign_settable_ctx_params;
@@ -781,7 +783,7 @@ static int vcrypto_rsa_vinit(void *vsctx, void *vrsa,
 static int vcrypto_rsa_sign(void *vsctx, unsigned char *sig, size_t *siglen,
                             size_t sigsize, const unsigned char *tbs,
                             size_t tbslen) {
-  log_trace("enter vcrypto_rsa_sign");
+  log_trace("enter %s", __func__);
   int ret = 0;
   vcrypto_rsa_sign_ctx *ctx = (vcrypto_rsa_sign_ctx *)vsctx;
 
@@ -793,9 +795,9 @@ static int vcrypto_rsa_sign(void *vsctx, unsigned char *sig, size_t *siglen,
 
   // 2.create session
   if (!ctx->ctx_status_session_created) {
-    ctx->key_data = VC_RSA_to_rsa_data(ctx->rsa);
+    ctx->session_data->key_data = VC_RSA_to_rsa_data(ctx->rsa);
     // BUG: fe create_sess should be able to accept all kinds of struct
-    if (!vcrypto_fe_protocol_create_sess(ctx)) {
+    if (!vcrypto_fe_protocol_create_sess(ctx->session_data)) {
       log_error("failed to create session in frontend");
       return 0;
     }
@@ -803,5 +805,232 @@ static int vcrypto_rsa_sign(void *vsctx, unsigned char *sig, size_t *siglen,
     ctx->ctx_status_session_created = 1;
   }
 
-  // 3. 
+  // 3. data prepare
+  if (tbslen > RSA_MAX_KEY_SIZE_BYTES) {
+    log_error("inlen: %d > RSA_MAX_KEY_SIZE_BYTES: %d", tbslen,
+              RSA_MAX_KEY_SIZE_BYTES);
+    return 0;
+  }
+  struct rte_mbuf *msg_mbuf = NULL;
+  struct rte_mbuf *sig_mbuf = NULL;
+  struct rte_crypto_op *op = NULL;
+
+  // 3.1 msg(to be signed)
+  msg_mbuf = rte_pktmbuf_alloc(pktmbuf_mempool);
+  if (!msg_mbuf ||
+      rte_pktmbuf_append(msg_mbuf, RSA_MAX_KEY_SIZE_BYTES) == NULL) {
+    log_error("msg_mbuf alloc failed");
+    goto cleanup;
+  }
+  uint8_t *msg_ptr = rte_pktmbuf_mtod(msg_mbuf, uint8_t *);
+  memcpy(msg_ptr, tbs, tbslen);
+  // 3.2 sig buffer
+  sig_mbuf = rte_pktmbuf_alloc(pktmbuf_mempool);
+  if (!sig_mbuf ||
+      rte_pktmbuf_append(sig_mbuf, RSA_MAX_KEY_SIZE_BYTES) == NULL) {
+    log_error("sig_mbuf alloc failed");
+    goto cleanup;
+  }
+  uint8_t *sig_ptr = rte_pktmbuf_mtod(sig_mbuf, uint8_t *);
+
+  // 4. crypto op alloc
+  op = rte_crypto_op_alloc(crypto_op_mempool, RTE_CRYPTO_OP_TYPE_ASYMMETRIC);
+  if (!op) {
+    log_error("crypto op alloc failed");
+    goto cleanup;
+  }
+
+  // 5. fill in op
+  rte_crypto_op_attach_asym_session(op, ctx->session_data->sess);
+  op->asym->rsa.op_type = RTE_CRYPTO_ASYM_OP_SIGN;
+  op->asym->rsa.message.data = msg_ptr;
+  op->asym->rsa.message.length = tbslen;
+  op->asym->rsa.sign.data = sig_ptr;
+  op->asym->rsa.sign.length = RSA_MAX_KEY_SIZE_BYTES;
+
+  // 6. send to daemon
+  if (rte_ring_enqueue(tx_ring, op) != 0) {
+    log_error("enqueue backend the crypto op failed");
+    goto cleanup;
+  }
+
+  // 7. wait for response
+  log_trace("waiting for response ...");
+  struct rte_crypto_op *completed_op = NULL;
+  while (rte_ring_dequeue(rx_ring, (void **)&completed_op) != 0) {
+    rte_pause();
+  }
+  log_trace("got response");
+
+  if (!completed_op) {
+    log_error("got NULL for completed_op");
+    goto cleanup;
+  } else {
+    log_trace("completed_op = %p", completed_op);
+  }
+  if (completed_op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
+    log_error("crypto operation process failed at backend");
+    goto cleanup;
+  } else {
+    log_trace("completed_op's status is SUCCESS");
+  }
+
+  // 8. copy result
+  if (sigsize < RSA_MAX_KEY_SIZE_BYTES) {
+    log_error("sigsize: %zu < RSA_MAX_KEY_SIZE_BYTES: %d", sigsize,
+              RSA_MAX_KEY_SIZE_BYTES);
+    goto cleanup;
+  }
+  memcpy(sig, completed_op->asym->rsa.sign.data, RSA_MAX_KEY_SIZE_BYTES);
+  *siglen = RSA_MAX_KEY_SIZE_BYTES;
+  ret = 1;
+
+cleanup:
+  if (msg_mbuf)
+    rte_pktmbuf_free(msg_mbuf);
+  if (sig_mbuf)
+    rte_pktmbuf_free(sig_mbuf);
+  if (op)
+    rte_crypto_op_free(op);
+  return ret;
 }
+
+static int vcrypto_rsa_verify(void *vsctx, const unsigned char *sig,
+                              size_t siglen, const unsigned char *tbs,
+                              size_t tbslen) {
+  log_trace("enter %s", __func__);
+  int ret = 0;
+  vcrypto_rsa_sign_ctx *ctx = (vcrypto_rsa_sign_ctx *)vsctx;
+
+  // 1. status check
+  if (!ctx || !sig || !siglen || !tbs) {
+    log_error("null ptr in passed in params");
+    return 0;
+  }
+
+  // 2.create session
+  if (!ctx->ctx_status_session_created) {
+    ctx->session_data->key_data = VC_RSA_to_rsa_data(ctx->rsa);
+    // BUG: fe create_sess should be able to accept all kinds of struct
+    if (!vcrypto_fe_protocol_create_sess(ctx->session_data)) {
+      log_error("failed to create session in frontend");
+      return 0;
+    }
+    log_trace("vcrypto_fe_protocol_create_sess success");
+    ctx->ctx_status_session_created = 1;
+  }
+
+  // 3. data prepare
+  if (tbslen > RSA_MAX_KEY_SIZE_BYTES) {
+    log_error("inlen: %d > RSA_MAX_KEY_SIZE_BYTES: %d", tbslen,
+              RSA_MAX_KEY_SIZE_BYTES);
+    return 0;
+  }
+  struct rte_mbuf *msg_mbuf = NULL;
+  struct rte_mbuf *sig_mbuf = NULL;
+  struct rte_crypto_op *op = NULL;
+
+  // 3.1 msg(to be verified)
+  msg_mbuf = rte_pktmbuf_alloc(pktmbuf_mempool);
+  if (!msg_mbuf ||
+      rte_pktmbuf_append(msg_mbuf, RSA_MAX_KEY_SIZE_BYTES) == NULL) {
+    log_error("msg_mbuf alloc failed");
+    goto cleanup;
+  }
+  uint8_t *msg_ptr = rte_pktmbuf_mtod(msg_mbuf, uint8_t *);
+  memcpy(msg_ptr, tbs, tbslen);
+  // 3.2 sig buffer
+  sig_mbuf = rte_pktmbuf_alloc(pktmbuf_mempool);
+  if (!sig_mbuf ||
+      rte_pktmbuf_append(sig_mbuf, RSA_MAX_KEY_SIZE_BYTES) == NULL) {
+    log_error("sig_mbuf alloc failed");
+    goto cleanup;
+  }
+  uint8_t *sig_ptr = rte_pktmbuf_mtod(sig_mbuf, uint8_t *);
+  memcpy(sig_ptr, sig, siglen);
+
+  // 4. crypto op alloc
+  op = rte_crypto_op_alloc(crypto_op_mempool, RTE_CRYPTO_OP_TYPE_ASYMMETRIC);
+  if (!op) {
+    log_error("crypto op alloc failed");
+    goto cleanup;
+  }
+
+  // 5. fill in op
+  rte_crypto_op_attach_asym_session(op, ctx->session_data->sess);
+  op->asym->rsa.op_type = RTE_CRYPTO_ASYM_OP_VERIFY;
+  op->asym->rsa.message.data = msg_ptr;
+  op->asym->rsa.message.length = tbslen;
+  op->asym->rsa.sign.data = sig_ptr;
+  op->asym->rsa.sign.length = RSA_MAX_KEY_SIZE_BYTES;
+
+  // 6. send to daemon
+  if (rte_ring_enqueue(tx_ring, op) != 0) {
+    log_error("enqueue backend the crypto op failed");
+    goto cleanup;
+  }
+
+  // 7. wait for response
+  log_trace("waiting for response ...");
+  struct rte_crypto_op *completed_op = NULL;
+  while (rte_ring_dequeue(rx_ring, (void **)&completed_op) != 0) {
+    rte_pause();
+  }
+  log_trace("got response");
+
+  if (!completed_op) {
+    log_error("got NULL for completed_op");
+    goto cleanup;
+  } else {
+    log_trace("completed_op = %p", completed_op);
+  }
+  if (completed_op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
+    log_warn("crypto operation for verify is not SUCCESS");
+    goto cleanup;
+  } else {
+    log_trace("completed_op's status is SUCCESS");
+  }
+
+  ret = 1;
+
+cleanup:
+  if (msg_mbuf)
+    rte_pktmbuf_free(msg_mbuf);
+  if (sig_mbuf)
+    rte_pktmbuf_free(sig_mbuf);
+  if (op)
+    rte_crypto_op_free(op);
+  return ret;
+}
+
+const OSSL_DISPATCH vcrypto_rsa_signature_functions[] = {
+    {OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))vcrypto_rsa_sign_newctx},
+    {OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))vcrypto_rsa_sign_freectx},
+    {OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))vcrypto_rsa_sinit},
+    {OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))vcrypto_rsa_vinit},
+    {OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))vcrypto_rsa_sign},
+    {OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))vcrypto_rsa_verify},
+    // {OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
+    //  (void (*)(void))vcrypto_rsa_digest_sinit},
+    // {OSSL_FUNC_SIGNATURE_DIGEST_SIGN, (void (*)(void))vcrypto_rsa_digest_sign},
+    // {OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
+    //  (void (*)(void))vcrypto_rsa_digest_vinit},
+    // {OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
+    //  (void (*)(void))vcrypto_rsa_digest_verify},
+    {OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,
+     (void (*)(void))vcrypto_rsa_sign_set_ctx_params},
+    {OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
+     (void (*)(void))vcrypto_rsa_sign_settable_ctx_params},
+    {OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,
+     (void (*)(void))vcrypto_rsa_sign_get_ctx_params},
+    {OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+     (void (*)(void))vcrypto_rsa_gettable_ctx_params},
+    {OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,
+     (void (*)(void))vcrypto_rsa_get_ctx_md_params},
+    {OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,
+     (void (*)(void))vcrypto_rsa_gettable_ctx_md_params},
+    {OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,
+     (void (*)(void))vcrypto_rsa_set_ctx_md_params},
+    {OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
+     (void (*)(void))vcrypto_rsa_settable_ctx_md_params},
+};
